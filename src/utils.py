@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from math import comb
 
 CARD_VALUES = {
     "2":1,
@@ -29,6 +30,7 @@ HAND_TYPES = {
     "Pairs":8,
     "High Card":9
 }
+TOTAL_CARDS = 52
 # Test to try to start to program the game
 @dataclass
 class Card():
@@ -242,3 +244,18 @@ def get_best_hand(cards: list[Card])-> Hand:
     return Hand(hand_type,hand)
 
 
+
+def get_flush_prob(hand: Hand)-> float:
+    prob = 0
+    color_cuant = {i:0 for i in COLORS}
+    remaining_cards = 52 - len(hand.cards)
+    cards_to_full = 7 - len(hand.cards)
+    for card in hand.cards:
+        color_cuant[card.color] += 1
+    temp = 0
+    for color in color_cuant:
+        for i in range(cards_to_full-(4-color_cuant[color])):
+            temp += comb(13-color_cuant[color],4-color_cuant[color]+i)*comb(remaining_cards-(13-color_cuant[color]),cards_to_full-i)
+    return prob
+h = get_best_hand([Card('C','7'),Card('D','9'),Card('H','7')])
+print(get_flush_prob(h))
