@@ -17,7 +17,7 @@ CARD_VALUES = {
     "K":12,
     "A":13
 }
-COLORS = {'S','H','D','C'}
+COLORS = ['S','H','D','C']
 HAND_TYPES = {
     "Straight Flush":0,
     "Royal Flush":1,
@@ -243,19 +243,95 @@ def get_best_hand(cards: list[Card])-> Hand:
 
     return Hand(hand_type,hand)
 
-
-
-def get_flush_prob(hand: Hand)-> float:
+def get_flush_prob(cards: list[Card])-> float:
     prob = 0
     color_cuant = {i:0 for i in COLORS}
-    remaining_cards = 52 - len(hand.cards)
-    cards_to_full = 7 - len(hand.cards)
-    for card in hand.cards:
+    remaining_cards = 52 - len(cards)
+    cards_to_full = 7 - len(cards)
+    for card in cards:
         color_cuant[card.color] += 1
     temp = 0
     for color in color_cuant:
-        for i in range(cards_to_full-(4-color_cuant[color])):
-            temp += comb(13-color_cuant[color],4-color_cuant[color]+i)*comb(remaining_cards-(13-color_cuant[color]),cards_to_full-i)
+        for i in range(cards_to_full-(5-color_cuant[color])+1):
+            color_cards_needed = 5-color_cuant[color]+i
+            temp += comb(13-color_cuant[color],color_cards_needed)*comb(remaining_cards-(13-color_cuant[color]),cards_to_full - color_cards_needed)
+    prob = temp / comb(remaining_cards,cards_to_full)
     return prob
-h = get_best_hand([Card('C','7'),Card('D','9'),Card('H','7')])
-print(get_flush_prob(h))
+
+def get_royal_flush_prob(cards: list[Card])-> float:
+    rflushes_nums = {color:5 for color in COLORS}
+    cards_left = 7 - len(cards)
+    for card in cards:
+        if CARD_VALUES[card.value] >= 9:
+            rflushes_nums[card.color] -= 1
+    prob = 0
+    for color in rflushes_nums:
+        if rflushes_nums[color] > cards_left:
+            continue
+        prob += comb(52-(len(cards)-(5-rflushes_nums[color]))-rflushes_nums[color],cards_left-rflushes_nums[color])
+    prob /= comb(52-len(cards),cards_left)
+    return prob
+
+def get_straight_flush_prob(cards: list[Card])-> float:
+    cards_left = 7-len(cards)
+    prob = 0
+    for i in range(0,10):
+        color_nums = {color:5 for color in COLORS}
+        for card in cards:
+            # Check cards left for the straight starting at i and with each color 
+            # (if the card next to the straight is present it is imposible to do that straight so it is ignored)
+            if  0 <= (CARD_VALUES[card.value]-i)%13 <= 4:
+                color_nums[card.color] -= 1
+            elif (CARD_VALUES[card.value]-i)%13 == 5:
+                color_nums[card.color] = 1000
+        for color in color_nums:
+            if color_nums[color] > cards_left:
+                continue
+            # Same than royal streaight flush but with a -1 cause the next cards cant appear after
+            if i==9:
+                prob += comb(52-(len(cards)-(5-color_nums[color]))-color_nums[color],cards_left-color_nums[color])
+            else:
+                prob += comb(52-(len(cards)-(5-color_nums[color]))-color_nums[color]-1,cards_left-color_nums[color])
+    prob /= comb(52-len(cards),cards_left)
+    return prob
+
+def get_poker_prob(cards: list[Card])-> float:
+    cards_left = 7-len(cards)
+    card_nums_left = {card:4 for card in CARD_VALUES}
+    for card in cards:
+        card_nums_left[card.value] -= 1
+    prob = 0
+    for card in card_nums_left:
+        if card_nums_left[card] > cards_left:
+            continue
+        prob += comb(52-(len(cards)-(4-card_nums_left[card]))-card_nums_left[card],cards_left-card_nums_left[card])
+    print(prob)
+    prob /= comb(52-len(cards),cards_left)
+    return prob
+
+# TODO
+def get_straight_prob(cards: list[Card])-> float:
+    cards_left = 7-len(cards)
+    prob = 0
+    for i in range(0,10):
+        cards_left_to_straight = 5
+        for card in cards:
+            # Check cards left for the straight starting at i and with each color 
+            # (if the card next to the straight is present it is imposible to do that straight so it is ignored)
+            if  0 <= (CARD_VALUES[card.value]-i)%13 <= 4:
+                cards_left_to_straight -= 1
+            elif (CARD_VALUES[card.value]-i)%13 == 5:
+                cards_left_to_straight = 1000
+        if cards_left_to_straight > cards_left:
+            continue
+        cards_left_to_choose = 52-cards_left_to_straight
+        if i==9:
+            prob += (4**cards_left_to_straight)*(comb(cards_left_to_choose,cards_left-cards_left_to_straight)-comb(cards_left_to_straight*3,cards_left-cards_left_to_straight))
+        else:
+            prob += (4**cards_left_to_straight)*(comb(cards_left_to_choose-4,cards_left-cards_left_to_straight)-comb(cards_left_to_straight*3,cards_left-cards_left_to_straight))
+    print(prob)
+    prob /= comb(52-len(cards),cards_left)
+    return prob
+# h = get_best_hand([])
+print(get_straight_flush_prob([])*100)
+print(get_straight_prob([])*100)

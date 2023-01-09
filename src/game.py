@@ -1,9 +1,23 @@
-from utils import Card,get_best_hand
-# Spades, Hearts, Diamonds, Clubs
-center_cards = [Card('C','7'),Card('C','9'),Card('H','7'),Card('C','Q'),Card('C','J')]
+from utils import Card,get_best_hand,CARD_VALUES,COLORS
+from itertools import combinations
+# # Spades, Hearts, Diamonds, Clubs
+# center_cards = [Card('C','7'),Card('C','9'),Card('H','7'),Card('C','Q'),Card('C','J')]
 a_hand = [Card('C','8'),Card('C','6')]
-b_hand = [Card('C','10'),Card('C','7')]
+# b_hand = [Card('C','10'),Card('C','7')]
 
-print(get_best_hand(a_hand+center_cards))
-print(get_best_hand(b_hand+center_cards))
-print(get_best_hand(a_hand+center_cards) >= get_best_hand(b_hand+center_cards))
+
+# print(get_best_hand(a_hand+center_cards))
+# print(get_best_hand(b_hand+center_cards))
+# print(get_best_hand(a_hand+center_cards) >= get_best_hand(b_hand+center_cards))
+
+all_cards = []
+
+for c in COLORS:
+    for v in CARD_VALUES:
+        all_cards.append(Card(c,v))
+
+def test_calculate_probs(hand: list):
+    for i in combinations(all_cards,5):
+        get_best_hand(hand + list(i))
+
+test_calculate_probs(a_hand)
