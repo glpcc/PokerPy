@@ -10,14 +10,4 @@ a_hand = [Card('C','8'),Card('C','6')]
 # print(get_best_hand(b_hand+center_cards))
 # print(get_best_hand(a_hand+center_cards) >= get_best_hand(b_hand+center_cards))
 
-all_cards = []
-
-for c in COLORS:
-    for v in CARD_VALUES:
-        all_cards.append(Card(c,v))
-
-def test_calculate_probs(hand: list):
-    for i in combinations(all_cards,5):
-        get_best_hand(hand + list(i))
-
-test_calculate_probs(a_hand)
+c

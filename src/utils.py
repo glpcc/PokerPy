@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from math import comb
-
+from functools import reduce
+from itertools import product
 CARD_VALUES = {
     "2":1,
     "3":2,
@@ -131,6 +132,9 @@ class Hand():
     
     def __repr__(self) -> str:
         return f'Hand(Hand_type: {self.type},Cards: {self.cards})'
+
+def multiply_list(l):
+    return reduce(lambda k,j: k*j,l,1)
 
 def get_best_hand(cards: list[Card])-> Hand:
     hand = []
@@ -311,27 +315,62 @@ def get_poker_prob(cards: list[Card])-> float:
 
 # TODO
 def get_straight_prob(cards: list[Card])-> float:
+    # This function doesnt take in to account straight hands that have a flush in them
     cards_left = 7-len(cards)
     prob = 0
     for i in range(0,10):
         cards_left_to_straight = 5
+        appeared_straight_cards = set()
+        cards_to_color = {c:5 for c in COLORS}
         for card in cards:
             # Check cards left for the straight starting at i and with each color 
             # (if the card next to the straight is present it is imposible to do that straight so it is ignored)
+            cards_to_color[card.color] -= 1
             if  0 <= (CARD_VALUES[card.value]-i)%13 <= 4:
                 cards_left_to_straight -= 1
+                appeared_straight_cards.add(CARD_VALUES[card.value])
             elif (CARD_VALUES[card.value]-i)%13 == 5:
                 cards_left_to_straight = 1000
+        cards_left_to_choose = [k for k in range(i,i+5) if k not in appeared_straight_cards]
         if cards_left_to_straight > cards_left:
             continue
-        cards_left_to_choose = 52-cards_left_to_straight
-        if i==9:
-            prob += (4**cards_left_to_straight)*(comb(cards_left_to_choose,cards_left-cards_left_to_straight)-comb(cards_left_to_straight*3,cards_left-cards_left_to_straight))
-        else:
-            prob += (4**cards_left_to_straight)*(comb(cards_left_to_choose-4,cards_left-cards_left_to_straight)-comb(cards_left_to_straight*3,cards_left-cards_left_to_straight))
+        repeated_cards_counted = {c:0 for c in COLORS}
+        cards_counted = [set() for c in range(cards_left_to_straight)]
+        for j in product(COLORS,repeat=cards_left_to_straight):
+            available_cards1 = 52 - (len(cards) - (5-cards_left_to_straight)) - cards_left_to_straight
+            available_cards2 = available_cards1
+            new_cards_to_color = cards_to_color.copy()
+            for color in j:
+                new_cards_to_color[color] -= 1
+            if any(new_cards_to_color[c] <= 0 for c in COLORS):
+                continue
+            for c in new_cards_to_color:
+                if new_cards_to_color[c] == 1:
+                    available_cards1 -= 13 - 4 
+                    available_cards2 -= 13 - 4 
+                elif new_cards_to_color[c] == 2:
+                    available_cards2 -= 13 - 3 
+            # TODO Change how repeated cards are counted taking into acount iut has to be reseted each time a color in j changes
+            available_cards1 -= sum(len(k) for k in cards_counted) - len([1 for i,cl in enumerate(j) if cl in cards_counted[i]])
+            available_cards2 -= sum(len(k) for k in cards_counted) - len([1 for i,cl in enumerate(j) if cl in cards_counted[i]])
+            if cards_left-cards_left_to_straight == 0:
+                prob += 1
+            elif cards_left-cards_left_to_straight == 1:
+                prob += available_cards1
+            elif cards_left-cards_left_to_straight == 2:
+                if j[0] == 'S':
+                    print(j,available_cards1,available_cards2,new_cards_to_color)
+                prob += comb(available_cards2,2)+(available_cards1-available_cards2)*available_cards2
+            for k,color in enumerate(j):
+                if color not in cards_counted[k]:
+                    repeated_cards_counted[color] += 1
+                    cards_counted[k].add(color)
+
+
     print(prob)
     prob /= comb(52-len(cards),cards_left)
     return prob
+
 # h = get_best_hand([])
 print(get_straight_flush_prob([])*100)
 print(get_straight_prob([])*100)
