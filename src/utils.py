@@ -19,6 +19,7 @@ CARD_VALUES = {
     "A":13
 }
 COLORS = ['S','H','D','C']
+COLORS_INDEX = {c:i for i,c in enumerate(COLORS)}
 HAND_TYPES = {
     "Straight Flush":0,
     "Royal Flush":1,
@@ -313,7 +314,7 @@ def get_poker_prob(cards: list[Card])-> float:
     prob /= comb(52-len(cards),cards_left)
     return prob
 
-# TODO
+# TODO Take into account if the next card in the straight considered is alredy in the cards.
 def get_straight_prob(cards: list[Card])-> float:
     # This function doesnt take in to account straight hands that have a flush in them
     cards_left = 7-len(cards)
@@ -326,18 +327,15 @@ def get_straight_prob(cards: list[Card])-> float:
             # Check cards left for the straight starting at i and with each color 
             # (if the card next to the straight is present it is imposible to do that straight so it is ignored)
             cards_to_color[card.color] -= 1
-            if  0 <= (CARD_VALUES[card.value]-i)%13 <= 4:
+            if 0 <= (CARD_VALUES[card.value]-i)%13 <= 4:
                 cards_left_to_straight -= 1
                 appeared_straight_cards.add(CARD_VALUES[card.value])
             elif (CARD_VALUES[card.value]-i)%13 == 5:
                 cards_left_to_straight = 1000
-        cards_left_to_choose = [k for k in range(i,i+5) if k not in appeared_straight_cards]
         if cards_left_to_straight > cards_left:
             continue
-        repeated_cards_counted = {c:0 for c in COLORS}
-        cards_counted = [set() for c in range(cards_left_to_straight)]
         for j in product(COLORS,repeat=cards_left_to_straight):
-            available_cards1 = 52 - (len(cards) - (5-cards_left_to_straight)) - cards_left_to_straight
+            available_cards1 = 52 - len(cards) - cards_left_to_straight - (4 if i != 9 else 0)
             available_cards2 = available_cards1
             new_cards_to_color = cards_to_color.copy()
             for color in j:
@@ -346,31 +344,44 @@ def get_straight_prob(cards: list[Card])-> float:
                 continue
             for c in new_cards_to_color:
                 if new_cards_to_color[c] == 1:
-                    available_cards1 -= 13 - 4 
-                    available_cards2 -= 13 - 4 
+                    sets_with_color_in = sum(1 for hand_cl in j if COLORS_INDEX[c] < COLORS_INDEX[hand_cl])
+                    available_cards1 -= (12 if i != 9 else 13) - 4 - sets_with_color_in
+                    available_cards2 -= (12 if i != 9 else 13) - 4 - sets_with_color_in
                 elif new_cards_to_color[c] == 2:
-                    available_cards2 -= 13 - 3 
-            # TODO Change how repeated cards are counted taking into acount iut has to be reseted each time a color in j changes
-            available_cards1 -= sum(len(k) for k in cards_counted) - len([1 for i,cl in enumerate(j) if cl in cards_counted[i]])
-            available_cards2 -= sum(len(k) for k in cards_counted) - len([1 for i,cl in enumerate(j) if cl in cards_counted[i]])
+                    sets_with_color_in = sum(1 for hand_cl in j if COLORS_INDEX[c] < COLORS_INDEX[hand_cl])
+                    available_cards2 -= (12 if i != 9 else 13) - 3 - sets_with_color_in
+            # This takes into account hand that counted the possibility of having a pair or triple in the two left cards
+            available_cards1 -= sum(COLORS_INDEX[col] for col in j)
+            available_cards2 -= sum(COLORS_INDEX[col] for col in j)
             if cards_left-cards_left_to_straight == 0:
                 prob += 1
             elif cards_left-cards_left_to_straight == 1:
                 prob += available_cards1
             elif cards_left-cards_left_to_straight == 2:
-                if j[0] == 'S':
-                    print(j,available_cards1,available_cards2,new_cards_to_color)
                 prob += comb(available_cards2,2)+(available_cards1-available_cards2)*available_cards2
-            for k,color in enumerate(j):
-                if color not in cards_counted[k]:
-                    repeated_cards_counted[color] += 1
-                    cards_counted[k].add(color)
+            # print(j,available_cards1,available_cards2,new_cards_to_color,i)
 
 
     print(prob)
     prob /= comb(52-len(cards),cards_left)
     return prob
 
+# TODO
+def get_pairs_prob(cards: list[Card])-> float:
+    ...
+
+# TODO
+def get_triples_prob(cards: list[Card])-> float:
+    ...
+
+# TODO
+def get_two_pair_prob(cards: list[Card])-> float:
+    ...
+
+def get_high_card_prob(cards: list[Card])-> float:
+    ...
+
 # h = get_best_hand([])
 print(get_straight_flush_prob([])*100)
 print(get_straight_prob([])*100)
+print(get_straight_prob([Card('H','A'),Card('D','2')])*100)
