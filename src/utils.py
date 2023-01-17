@@ -372,8 +372,77 @@ def get_pairs_prob(cards: list[Card])-> float:
 
 # TODO
 def get_triples_prob(cards: list[Card])-> float:
-    ...
-
+    cards_left = 7 - len(cards)
+    prob = 0
+    # Return precalculated output if no cards are given for speed
+    if len(cards) == 0: return 6461620/comb(52,7)
+    unique_cards_with_nums = {}
+    color_nums = {c:0 for c in COLORS}
+    unique_cards_colors = {}
+    for i in cards:
+        if i.value not in unique_cards_with_nums:
+            unique_cards_with_nums[i.value] = 1
+            unique_cards_colors[i.value] = {i.color}
+        else:
+            unique_cards_with_nums[i.value] += 1
+            unique_cards_colors[i.value].add(i.color)
+        color_nums[i.color] += 1
+    print(unique_cards_with_nums)
+    # Iterate through the unique cards to count the posibility they are the card of the triple
+    max_num = max(unique_cards_with_nums,key=lambda k: unique_cards_with_nums[k])
+    for card in filter(lambda k: unique_cards_with_nums[k] == unique_cards_with_nums[max_num],unique_cards_with_nums):
+        # Check if there is alredy a triple
+        if unique_cards_with_nums[card] >= 3:
+            return 0
+        if 3-unique_cards_with_nums[card] > cards_left:
+            continue
+        posible_rank_choosings = comb(13-len(unique_cards_with_nums),5-len(unique_cards_with_nums))
+        # Calculate the posible straights with the cards given  
+        posible_straights = sum(1 for i in range(0,10) if all(0 <=(CARD_VALUES[c.value]-i)%13 <= 4 for c in cards))
+        posible_rank_choosings -= posible_straights
+        # Num of posibilities of the rank of the triple
+        posibles_triples_rank = 1
+        # Num of the posibilities of choosing the suit of each card in the triple
+        posible_triple_suit_choices = 4 - unique_cards_with_nums[card]
+        # Num of the posible flushes that might appear when choosing the suits of the other cards
+        most_numerous_color = max(color_nums,key = lambda k: color_nums[k])
+        non_triple_card_suit_posb = (4-len(unique_cards_with_nums)+1)**4
+        if most_numerous_color in unique_cards_colors[card]:
+            if color_nums[most_numerous_color] == 1:
+                non_triple_card_suit_posb -= 1
+            elif 5-color_nums[most_numerous_color] == 4-len(unique_cards_with_nums)+1:
+                non_triple_card_suit_posb -= 1
+            prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+        else:
+            if 5-color_nums[most_numerous_color]-1 == 4-len(unique_cards_with_nums)+1:
+                prob += posible_rank_choosings*posibles_triples_rank*(posible_triple_suit_choices-1)*non_triple_card_suit_posb
+                prob += posible_rank_choosings*posibles_triples_rank*(non_triple_card_suit_posb-1)
+            else:
+                prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+    # Know calculate the case in which none of the cards is the one in the triple
+    if cards_left >= 3 and all(unique_cards_with_nums[i]<2 for i in unique_cards_with_nums):
+        posible_rank_choosings = comb(13-len(unique_cards_with_nums),5-len(unique_cards_with_nums))
+        # Calculate the posible straights with the cards given  
+        posible_straights = sum(1 for i in range(0,10) if all(0 <=(CARD_VALUES[c.value]-i)%13 <= 4 for c in cards))
+        posible_rank_choosings -= posible_straights
+        # Num of posibilities of the rank of the triple
+        posibles_triples_rank = 5-len(unique_cards_with_nums)
+        # Num of the posibilities of choosing the suit of each card in the triple
+        most_numerous_color = max(color_nums,key = lambda k: color_nums[k])
+        if color_nums[most_numerous_color] == 4:
+            posible_triple_suit_choices = 1
+        else:
+            posible_triple_suit_choices = 4
+        # Num of the posible flushes that might appear when choosing the suits of the other cards
+        non_triple_card_suit_posb = (4-len(unique_cards_with_nums))**4
+        if 5-color_nums[most_numerous_color]-1 == 4-len(unique_cards_with_nums):
+            if 5-color_nums[most_numerous_color]-1 == 4-len(unique_cards_with_nums)+1:
+                prob += posible_rank_choosings*posibles_triples_rank*(posible_triple_suit_choices-1)*non_triple_card_suit_posb
+                prob += posible_rank_choosings*posibles_triples_rank*(non_triple_card_suit_posb-1)
+            else:
+                prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+    print(prob)
+    return prob / comb(52-len(cards),cards_left)
 # TODO
 def get_two_pair_prob(cards: list[Card])-> float:
     ...
@@ -382,6 +451,6 @@ def get_high_card_prob(cards: list[Card])-> float:
     ...
 
 # h = get_best_hand([])
-print(get_straight_flush_prob([])*100)
-print(get_straight_prob([])*100)
-print(get_straight_prob([Card('H','A'),Card('D','2')])*100)
+# print(get_straight_flush_prob([])*100)
+# print(get_straight_prob([])*100)
+print(get_triples_prob([Card('D','2'),Card('H','2'),Card('H','A'),Card('D','10'),Card('C','8')])*100)
