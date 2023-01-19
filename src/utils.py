@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from math import comb
 from functools import reduce
 from itertools import product
+
 CARD_VALUES = {
     "2":1,
     "3":2,
@@ -34,22 +35,26 @@ HAND_TYPES = {
 }
 TOTAL_CARDS = 52
 # Test to try to start to program the game
-@dataclass
 class Card():
-    color: str
-    value: str
+    def __init__(self,color: str, value: str) -> None:
+        self.color = color
+        self.value = value
+        self.num_value = CARD_VALUES[self.value]
 
     def __ge__(self, other: Card) -> bool:
-        return CARD_VALUES[self.value] >= CARD_VALUES[other.value]
+        return self.num_value >= other.num_value
 
     def __le__(self, other: Card) -> bool:
-        return CARD_VALUES[self.value] <= CARD_VALUES[other.value]
+        return self.num_value <= other.num_value
 
     def __gt__(self, other: Card) -> bool:
-        return CARD_VALUES[self.value] > CARD_VALUES[other.value]
+        return self.num_value > other.num_value
 
     def __lt__(self, other: Card) -> bool:
-        return CARD_VALUES[self.value] < CARD_VALUES[other.value]
+        return self.num_value < other.num_value
+
+    def __eq__(self, other: Card) -> bool:
+        return self.color == other.color and self.num_value == other.num_value
 
     def __repr__(self) -> str:
         return f'{self.value}{self.color}'
@@ -141,27 +146,37 @@ def get_best_hand(cards: list[Card])-> Hand:
     hand = []
     # Count the number of values and color to check for pairs,triples,pokers or colors
     colors_nums: dict[str,list[Card]] = dict()
-    value_nums: dict[str,list[Card]] = dict()
     for i in cards:
-        if i.value in value_nums:
-            value_nums[i.value].append(i)
-        else:
-            value_nums[i.value] = [i]
-        
         if i.color in colors_nums:
             colors_nums[i.color].append(i)
         else:
             colors_nums[i.color] = [i]
-        
-
 
     # Check for straights
-    sorted_cards = sorted(cards, reverse=True)
+    sorted_cards = sorted(cards, reverse=True,key = lambda k: k.num_value)
     last_card = sorted_cards[0]
     straigth = [sorted_cards[0]]
     straights: list[list[Card]] = []
+    triples = []
+    pairs = []
+    individuals = []
+    pokers = []
+    group = [sorted_cards[0]]
     for i in sorted_cards[1:]:
-        if CARD_VALUES[last_card.value] - CARD_VALUES[i.value] == 1:
+        if i.num_value == last_card.num_value:
+            group.append(i)
+        else:
+            temp = len(group)
+            if temp == 1:
+                individuals.append(group[0])
+            elif temp == 2:
+                pairs.append(group)
+            elif temp == 3:
+                triples.append(group)
+            else:
+                pokers.append(group)
+            group = [i]
+        if last_card.num_value - i.num_value == 1:
             straigth.append(i)
         else:
             straigth = [i]
@@ -169,6 +184,18 @@ def get_best_hand(cards: list[Card])-> Hand:
             straights.append(straigth)
             straigth = straigth[1:]
         last_card = i
+
+    temp = len(group)
+    if temp == 1:
+        individuals.append(group[0])
+    elif temp == 2:
+        pairs.append(group)
+    elif temp == 3:
+        triples.append(group)
+    else:
+        pokers.append(group)
+
+
     if len(straights) > 0:
         straight_flushes = [i for i in straights if all(j.color == i[0].color for j in i)]
         if len(straight_flushes) > 0:
@@ -178,36 +205,18 @@ def get_best_hand(cards: list[Card])-> Hand:
                 hand_type = "Royal Flush"
             return Hand(hand_type,hand)
 
-    triples = []
-    pairs = []
-    individuals = []
-    pokers = []
-    for i in value_nums:
-        if len(value_nums[i]) == 1:
-            individuals.append(value_nums[i][0])
-        elif len(value_nums[i]) == 2:
-            pairs.append(value_nums[i])
-        elif len(value_nums[i]) == 3:
-            triples.append(value_nums[i])
-        else:
-            pokers.append(value_nums[i])
-    individuals = sorted(individuals,reverse=True)
-
     if len(pokers) > 0:
         hand_type = "Poker"
-        hand = sorted(pokers,key= lambda k: k[0], reverse=True)[0]
+        hand = pokers[0]
         if len(cards) > 4:
-            hand.append(individuals[0])
+            hand.append(max(c for c in cards if c.num_value != hand[0].num_value))
         return Hand(hand_type,hand)
 
-    pairs = sorted(pairs,key= lambda k: k[0], reverse=True)
-    triples = sorted(triples,key= lambda k: k[0], reverse=True)
     if len(triples) > 0 and len(pairs) > 0:
         hand_type = "Full House" 
         hand = triples[0] + pairs[0]
         return Hand(hand_type,hand)
     
-    # WARNING no comparison between flushes is made cause no more than 7 cards are expected
     flushes = [colors_nums[i] for i in colors_nums if len(colors_nums[i])>=5]
     if len(flushes) > 0:
         hand_type = "Flush"
@@ -222,7 +231,7 @@ def get_best_hand(cards: list[Card])-> Hand:
     if len(triples) > 0:
         hand_type = "Triples"
         hand = triples[0]
-        if len(cards)-3 > 0:
+        if len(cards) > 3:
             hand += individuals[0:min(2,len(cards)-3)]
         return Hand(hand_type,hand)  
 
@@ -230,22 +239,24 @@ def get_best_hand(cards: list[Card])-> Hand:
         hand_type = "Double Pairs"
         hand = pairs[0] + pairs[1]
         if len(cards) > 4:
-            hand.append(individuals[0])
+            if len(pairs) == 3:
+                hand.append(max(individuals[0],pairs[2][0]))
+            else:
+                hand.append(individuals[0])
         return Hand(hand_type,hand)
     
-    if len(pairs) >= 1:
+    if len(pairs) == 1:
         hand_type = "Pairs"
         hand = pairs[0]
         if len(cards)-2 > 0:
             hand += individuals[0:min(3,len(cards)-2)]
         return Hand(hand_type,hand) 
 
-    hand_type = 'High Card'
+    hand_type = "High Card"
     if len(cards) > 5:
         hand = individuals[0:5]
     else:
         hand = individuals
-
     return Hand(hand_type,hand)
 
 def get_flush_prob(cards: list[Card])-> float:
@@ -375,7 +386,7 @@ def get_triples_prob(cards: list[Card])-> float:
     cards_left = 7 - len(cards)
     prob = 0
     # Return precalculated output if no cards are given for speed
-    if len(cards) == 0: return 6461620/comb(52,7)
+    # if len(cards) == 0: return 6461620/comb(52,7)
     unique_cards_with_nums = {}
     color_nums = {c:0 for c in COLORS}
     unique_cards_colors = {}
@@ -389,7 +400,8 @@ def get_triples_prob(cards: list[Card])-> float:
         color_nums[i.color] += 1
     print(unique_cards_with_nums)
     # Iterate through the unique cards to count the posibility they are the card of the triple
-    max_num = max(unique_cards_with_nums,key=lambda k: unique_cards_with_nums[k])
+    max_num = max(unique_cards_with_nums,key=lambda k: unique_cards_with_nums[k]) if len(cards) > 0 else 0
+    most_numerous_color = max(color_nums,key = lambda k: color_nums[k])
     for card in filter(lambda k: unique_cards_with_nums[k] == unique_cards_with_nums[max_num],unique_cards_with_nums):
         # Check if there is alredy a triple
         if unique_cards_with_nums[card] >= 3:
@@ -405,20 +417,18 @@ def get_triples_prob(cards: list[Card])-> float:
         # Num of the posibilities of choosing the suit of each card in the triple
         posible_triple_suit_choices = 4 - unique_cards_with_nums[card]
         # Num of the posible flushes that might appear when choosing the suits of the other cards
-        most_numerous_color = max(color_nums,key = lambda k: color_nums[k])
         non_triple_card_suit_posb = (4-len(unique_cards_with_nums)+1)**4
-        if most_numerous_color in unique_cards_colors[card]:
-            if color_nums[most_numerous_color] == 1:
-                non_triple_card_suit_posb -= 1
-            elif 5-color_nums[most_numerous_color] == 4-len(unique_cards_with_nums)+1:
-                non_triple_card_suit_posb -= 1
-            prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+        # If there is only cards for the triple we have to discard 3 flushes
+        if len(cards) == unique_cards_with_nums[card]:
+            non_triple_card_suit_posb -= 3
         else:
-            if 5-color_nums[most_numerous_color]-1 == 4-len(unique_cards_with_nums)+1:
-                prob += posible_rank_choosings*posibles_triples_rank*(posible_triple_suit_choices-1)*non_triple_card_suit_posb
-                prob += posible_rank_choosings*posibles_triples_rank*(non_triple_card_suit_posb-1)
-            else:
-                prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+            non_selected_cards = [i for i in cards if i.value != card]
+            # if all remaining cards have the same color 
+            if all(i.color == non_selected_cards[0].color for i in non_selected_cards):
+                non_triple_card_suit_posb -= 1
+        prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
+
+                
     # Know calculate the case in which none of the cards is the one in the triple
     if cards_left >= 3 and all(unique_cards_with_nums[i]<2 for i in unique_cards_with_nums):
         posible_rank_choosings = comb(13-len(unique_cards_with_nums),5-len(unique_cards_with_nums))
@@ -443,6 +453,7 @@ def get_triples_prob(cards: list[Card])-> float:
                 prob += posible_rank_choosings*posibles_triples_rank*posible_triple_suit_choices*non_triple_card_suit_posb
     print(prob)
     return prob / comb(52-len(cards),cards_left)
+
 # TODO
 def get_two_pair_prob(cards: list[Card])-> float:
     ...
@@ -453,4 +464,5 @@ def get_high_card_prob(cards: list[Card])-> float:
 # h = get_best_hand([])
 # print(get_straight_flush_prob([])*100)
 # print(get_straight_prob([])*100)
-print(get_triples_prob([Card('D','2'),Card('H','2'),Card('H','A'),Card('D','10'),Card('C','8')])*100)
+print(get_straight_prob([Card('H','A'),Card('C','3')])*100)
+print(get_triples_prob([Card('D','2'),Card('H','2')])*100)
