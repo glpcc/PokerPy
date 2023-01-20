@@ -1,6 +1,5 @@
 #include <string>
 #include <iostream>
-#include <vector>
 #include <algorithm>
 #include <chrono>
 
@@ -17,116 +16,157 @@ struct Card{
 
 struct Hand{
     string hand_type;
-    vector<Card> Cards;
+    Card Cards[5];
 };
 
-void print_vector(vector<Card> cards){
-    for(auto i=cards.begin(); i<cards.end(); i++)
+void print_cards(Card cards[7]){
+    for(auto i=0; i<5; i++)
 	{
-		cout<<(*i).value << " " << (*i).color << "\n";
+		cout<<cards[i].value << " " << cards[i].color << "\n";
 	}
 }
 
-Hand get_best_hand(vector<Card> cards){
+Hand get_best_hand(Card cards[7]){
     // Sort the cards
-    sort(cards.begin(),cards.end(),[](Card &a,Card &b){return a.value > b.value;});
+    sort(cards,cards+7,[](Card &a,Card &b){return a.value > b.value;});
     // Divide the cards by color
-    vector<Card> color_cards[4];
+    Card color_cards[4][7];
+    int num_color_cards[4] = {0,0,0,0};
+    color_cards[cards[0].color][0] = cards[0];
+    num_color_cards[cards[0].color]++;
     // To get the straights
-    vector<Card> current_straight = {cards[0]};
-    vector<Card> straight;
+    Card current_straight[5];
+    current_straight[0] = cards[0];
+    int current_straight_size = 1;
+    Card straight[5];
+    bool found_straight = false;
     // To get straight flushes
-    vector<Card> straight_flushes[4];
-    straight_flushes[cards[0].color].push_back(cards[0]);
-    vector<Card> straight_flush;
+    Card straight_flushes[4][7];
+    straight_flushes[cards[0].color][0] = cards[0];
+    int straight_flushes_sizes[4] = {0,0,0,0};
+    straight_flushes_sizes[cards[0].color] += 1;
+    Card straight_flush[5];
+    bool found_straight_flush = false;
     // To get rest of groupings
-    vector<vector<Card>> pairs;
-    vector<vector<Card>> triples;
-    vector<Card> pokers;
-    vector<Card> individuals;
+    Card pairs[3][2];
+    int num_pairs = 0;
+    Card triples[2][3];
+    int num_triples = 0;
+    Card pokers[4];
+    bool found_poker = false;
+    Card individuals[7];
+    int num_individuals = 0;
     // Temporary variables;
-    vector<Card> group = {cards[0]};
+    Card group[4];
+    int group_size = 1;
+    group[0] = cards[0];
     Card last_card = cards[0];
     // Iterate through the sorted cards to extract the posible hands
-    for(auto i=cards.begin()+1; i<cards.end(); i++)
+    for(auto i=1; i<7; i++)
 	{
         // Search for pairs,triples,etc
-        if ((*i).value == last_card.value){
-            group.push_back(*i);
+        if (cards[i].value == last_card.value){
+            group[group_size] = cards[i];
+            group_size++;
         }else{
-            switch (group.size())
+            switch (group_size)
             {
             case 1:
-                individuals.push_back(last_card);
+                individuals[num_individuals] = cards[i];
+                num_individuals++;
                 break;
             case 2:
-                pairs.push_back(group);
+                pairs[num_pairs][0] = group[0];
+                pairs[num_pairs][1] = group[1];
+                num_pairs++;
                 break;
             case 3:
-                triples.push_back(group);
+                triples[num_triples][0] = group[0];
+                triples[num_triples][1] = group[1];
+                triples[num_triples][2] = group[2];
+                num_triples++;
                 break;
             case 4:
-                pokers = group;
+                pokers[0] = group[0];
+                pokers[1] = group[1];
+                pokers[2] = group[2];
+                pokers[3] = group[3];
+                found_poker = true;
                 break;
             }
-            group.clear();
-            group.push_back(*i);
+            group_size = 1;
+            group[0] = cards[i];
         }
         // Search for straights
-        if ((*i).value - last_card.value == 1){
-            current_straight.push_back(*i);
-        }else if ((*i).value != last_card.value){
-            current_straight.clear();
-            current_straight.push_back(*i);
+        if (cards[i].value - last_card.value == 1){
+            current_straight[current_straight_size] = cards[i];
+            current_straight_size++;
+        }else if (cards[i].value != last_card.value){
+            current_straight_size = 1;
+            current_straight[0] = cards[i];
         }
-        if (current_straight.size() == 5){
-            straight = current_straight;
-            current_straight.clear();
+        if (current_straight_size == 5){
+            copy(current_straight,current_straight+5,straight);
+            current_straight_size = 0;
+            found_straight = true;
         }
         // Search for flushes
-        color_cards[(*i).color].push_back(*i);
+        color_cards[cards[i].color][num_color_cards[cards[i].color]] = cards[i];
+        num_color_cards[cards[i].color]++;
         // Search for straight flushes
-        if (straight_flushes[(*i).color].size() != 0){
-            if (straight_flushes[(*i).color][straight_flushes[(*i).color].size()-1].value - (*i).value == 1){
-                straight_flushes[(*i).color].push_back(*i);
-                if (straight_flushes[(*i).color].size() == 5){
-                    straight_flush = straight_flushes[(*i).color];
+        if (straight_flushes_sizes[cards[i].color] != 0){
+            if (straight_flushes[cards[i].color][straight_flushes_sizes[cards[i].color]-1].value - cards[i].value == 1){
+                straight_flushes[cards[i].color][straight_flushes_sizes[cards[i].color]] = cards[i];
+                straight_flushes_sizes[cards[i].color]++;
+                if (straight_flushes_sizes[cards[i].color] == 5){
+                    copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+5,straight_flush);
+                    found_straight_flush = true;
+                    straight_flushes_sizes[cards[i].color] = 0;
                 }
             }else{
-                straight_flushes[(*i).color].clear();
-                straight_flushes[(*i).color].push_back(*i);
+                straight_flushes_sizes[cards[i].color] = 1;
+                straight_flushes[cards[i].color][0] = cards[i];
             }
         }else{
-            straight_flushes[(*i).color].push_back(*i);
+            straight_flushes[cards[i].color][0] = cards[i];
         }
-		last_card = *i;
+		last_card = cards[i];
 	}
     // Add the last group
-    switch (group.size())
+    switch (group_size)
     {
     case 1:
-        individuals.push_back(last_card);
+        individuals[num_individuals] = group[0];
+        num_individuals++;
         break;
     case 2:
-        pairs.push_back(group);
+        pairs[num_pairs][0] = group[0];
+        pairs[num_pairs][1] = group[1];
+        num_pairs++;
         break;
     case 3:
-        triples.push_back(group);
+        triples[num_triples][0] = group[0];
+        triples[num_triples][1] = group[1];
+        triples[num_triples][2] = group[2];
         break;
     case 4:
-        pokers = group;
+        pokers[0] = group[0];
+        pokers[1] = group[1];
+        pokers[2] = group[2];
+        pokers[3] = group[3];
         break;
     }
     // Check for straight flushes
-    if (straight_flush.size() == 0){
+    if (!found_straight_flush){
         // Iterate through the cards to see if ACES of some color makes a straight flush
-        for(auto i=cards.begin(); i<cards.end(); i++)
+        for(int i=0; i<7; i++)
         {
-            if ((*i).value != 13){
+            if (cards[i].value != 13){
                 break;
-            }else if (straight_flushes[(*i).color].size() == 4 && straight_flushes[(*i).color][0].value == 4){
-                straight_flush = straight_flushes[(*i).color];
-                straight_flush.push_back(*i);
+            }else if (straight_flushes_sizes[cards[i].color] == 4 && straight_flushes[cards[i].color][0].value == 4){
+                copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+4,straight_flush);
+                straight_flush[4] = cards[i];
+                found_straight_flush = true;
                 break;
             }
 
@@ -134,84 +174,93 @@ Hand get_best_hand(vector<Card> cards){
     }
     // Create the result hand
     Hand result;
-    if (straight_flush.size() != 0){
+    if (found_straight_flush){
         if (straight_flush[0].value == 13){
             result.hand_type = "Royal Flush";
         }else{
             result.hand_type = "Straight Flush";
         }
-        result.Cards = straight_flush;
+        copy(straight_flush,straight_flush+5,result.Cards);
         return result;
     }
 
-    if (pokers.size() != 0){
+    if (found_poker){
         result.hand_type = "Poker";
-        result.Cards = pokers;
-        for(auto i=cards.begin(); i<cards.end(); i++){
-            if ((*i).value != pokers[0].value){
-                result.Cards.push_back(*i);
+        copy(pokers,pokers+4,result.Cards);
+        for(int i=0; i<7; i++){
+            if (cards[i].value != pokers[0].value){
+                result.Cards[4] = cards[i];
                 break;
             }
         }
         return result;
     }
     
-    if (triples.size() > 0 && pairs.size() > 0){
+    if (num_triples > 0 && num_pairs > 0){
         result.hand_type = "Full House";
-        result.Cards = triples[0];
-        result.Cards.insert(result.Cards.end(),pairs[0].begin(),pairs[0].end());
+        copy(triples[0],triples[0]+3,result.Cards);
+        result.Cards[3] = pairs[0][0];
+        result.Cards[4] = pairs[0][1];
         return result;
-    }else if(triples.size() == 2){
+    }else if(num_triples == 2){
         result.hand_type = "Full House";
-        result.Cards = triples[0];
-        result.Cards.insert(result.Cards.end(),triples[1].begin(),triples[1].begin()+2);
+        copy(triples[0],triples[0]+3,result.Cards);
+        result.Cards[3] = triples[1][0];
+        result.Cards[4] = triples[1][1];
         return result;
     }
     // Check flushes
     for (size_t i = 0; i < 4; i++)
     {
-        if (color_cards[i].size() >= 5){
+        if (num_color_cards[i] >= 5){
             result.hand_type = "Flush";
-            result.Cards.insert(result.Cards.end(),color_cards[i].begin(),color_cards[i].begin()+5);
+            copy(color_cards[i],color_cards[i]+5,result.Cards);
             return result;
         }
     }
     
     // Check if the straight form with an ACE
-    if (current_straight.size() == 4 && current_straight[3].value == 1 && cards[0].value == 13){
-        straight = current_straight;
-        straight.push_back(cards[0]);
+    if (!found_straight && current_straight_size == 4 && current_straight[3].value == 1 && cards[0].value == 13){
+        copy(current_straight,current_straight+4,straight);
+        found_straight = true;
+        straight[4] = cards[0];
     }
     
-    if (straight.size() != 0){
+    if (found_straight){
         result.hand_type = "Straight";
-        result.Cards = straight;
+        copy(straight,straight+5,result.Cards);
         return result;
     }
 
-    if (triples.size() == 1){
+    if (num_triples == 1){
         result.hand_type = "Triples";
-        result.Cards = triples[0];
-        result.Cards.insert(result.Cards.end(),individuals.begin(),individuals.begin()+2);
+        copy(triples[0],triples[0]+3,result.Cards);
+        result.Cards[3] = individuals[0];
+        result.Cards[4] = individuals[1];
         return result;
     }
 
-    if (pairs.size() >= 2){
+    if (num_pairs >= 2){
         result.hand_type = "Double Pairs";
-        result.Cards = pairs[0];
-        result.Cards.insert(result.Cards.end(),pairs[1].begin(),pairs[1].end());
-        result.Cards.push_back(individuals[0]);
+        result.Cards[0] = pairs[0][0];
+        result.Cards[1] = pairs[0][1];
+        result.Cards[2] = pairs[1][0];
+        result.Cards[3] = pairs[1][1];
+        result.Cards[4] = individuals[0];
         return result;
     }
 
-    if (pairs.size() == 1){
+    if (num_pairs == 1){
         result.hand_type = "Pairs";
-        result.Cards = pairs[0];
-        result.Cards.insert(result.Cards.end(),individuals.begin(),individuals.begin()+3);
+        result.Cards[0] = pairs[0][0];
+        result.Cards[1] = pairs[0][1];
+        result.Cards[2] = individuals[0];
+        result.Cards[3] = individuals[1];
+        result.Cards[4] = individuals[2];
         return result;
     }
     result.hand_type = "High Card";
-    result.Cards.insert(result.Cards.end(),individuals.begin(),individuals.begin()+5);
+    copy(individuals,individuals+5,result.Cards);
     return result;
 }
 
@@ -223,18 +272,23 @@ Card create_card(int color, int value){
 }
 
 int main(){
-    vector<Card> current_hand = {create_card(1,2),create_card(2,4),create_card(0,7),create_card(0,2),create_card(3,13),create_card(1,13),create_card(1,12)};
+    Card current_hand[7] = {create_card(1,12),create_card(2,4),create_card(1,10),create_card(1,11),create_card(1,9),create_card(2,7),create_card(1,13)};
+    string posible_hand_types[12] = {"Straight Flush","Royal Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
     auto start = high_resolution_clock::now();
     Hand result;
+    // Iterate over the combinations
+    // 2118760
+    // result = get_best_hand(current_hand);
     for (int i = 0; i < 2118760; i++)
     {
         result = get_best_hand(current_hand);
     }
+    cout << "Holaaa" << endl;
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<seconds>(stop - start);
+    auto duration = duration_cast<nanoseconds>(stop - start);
     //cout << duration.count()*2118760 << endl;
     cout << duration.count() << endl;
-    cout << result.hand_type << "\n";
-    print_vector(result.Cards);
+    cout << result.hand_type << endl;
+    print_cards(result.Cards);
     return 0;
 }
