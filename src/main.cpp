@@ -277,30 +277,47 @@ Card create_card(int color, int value){
     return c;
 }
 
-map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_given_cards){
+vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
+    int num_given_cards = cards[0].size();
+    vector<array<Card,7>> players_cards;
+    for (int i = 0; i < cards.size(); i++)
+    {
+        array<Card,7> temp;
+        copy(cards[i].begin(),cards[i].end(),temp.begin());
+        players_cards.push_back(temp);
+    }
     array<Card,7> new_hand;
     string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
     // Create the map with the hand_types and the number of hands of that type
+    vector<map<string,int>> players_hand_posibilities;
     map<string,int> hand_posibilities;
     for (int i = 0; i < 10; i++)
     {
         hand_posibilities[posible_hand_types[i]] = 0;
     }
+    for (int l = 0; l < players_cards.size(); l++)
+    {
+        players_hand_posibilities.push_back(hand_posibilities);
+
+    }
     Hand result;
     // Create all posible cards
     // TODO If there are other players cards change this posible cards
     vector<Card> posible_cards;
-    for (size_t i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        for (size_t j = 1; j < 14; j++)
+        for (int j = 1; j < 14; j++)
         {
             Card new_card;
             bool alredy_in_hand = false;
-            for (size_t k = 0; k < num_given_cards; k++)
+            for (int l = 0; l < players_cards.size(); l++)
             {
-                if (current_hand[k].value == j && current_hand[k].color == i){
-                    alredy_in_hand = true;
-                    break;
+                for (int k = 0; k < num_given_cards; k++)
+                {
+                    if (players_cards[l][k].value == j && players_cards[l][k].color == i){
+                        alredy_in_hand = true;
+                        break;
+                    }
                 }
             }
             if (!alredy_in_hand){
@@ -314,15 +331,17 @@ map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_give
     int indexes[5] = {0,1,2,3,4};
     int n = (7-num_given_cards);
     int N = posible_cards.size();
-    for (size_t i = 0; i < n; i++)
-    {
-        current_hand[num_given_cards+i] = posible_cards[indexes[i]];
-    }
     int num_posible_cases = 1;
-    new_hand = current_hand;
-    //copy(current_hand,current_hand+7,new_hand);
-    result = get_best_hand(new_hand);
-    hand_posibilities[result.hand_type]++;
+    for (int l = 0; l < players_cards.size(); l++)
+    {
+        for (size_t i = 0; i < n; i++)
+        {
+            players_cards[l][num_given_cards+i] = posible_cards[indexes[i]];
+        }
+        new_hand = players_cards[l];
+        result = get_best_hand(new_hand);
+        players_hand_posibilities[l][result.hand_type]++;
+    }
     while (indexes[0] != N-n){
         // Create a new combination of indexes
         // Iterate backwards through the indexes
@@ -337,40 +356,21 @@ map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_give
                 break;
             }
         }
-        for (int i = 0; i < n; i++)
+        for (int l = 0; l < players_cards.size(); l++)
         {
-            current_hand[num_given_cards+i] = posible_cards[indexes[i]];
+            for (int i = 0; i < n; i++)
+            {
+                players_cards[l][num_given_cards+i] = posible_cards[indexes[i]];
+            }
+            new_hand = players_cards[l];
+            //copy(current_hand,current_hand+7,new_hand);
+            result = get_best_hand(new_hand);
+            players_hand_posibilities[l][result.hand_type]++;
         }
-        new_hand = current_hand;
-        //copy(current_hand,current_hand+7,new_hand);
-        result = get_best_hand(new_hand);
-        hand_posibilities[result.hand_type]++;
         num_posible_cases++;
     }
-    hand_posibilities["Total Cases"] = num_posible_cases;
-    return hand_posibilities;
-}
-
-int test(){
-    string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
-    array<Card,7> current_hand = {create_card(1,2),create_card(2,2)};
-    //Card current_hand[7] = {create_card(1,2),create_card(2,2),create_card(3,2),create_card(1,4),create_card(3,5),create_card(1,10),create_card(0,7)};
-    auto start = high_resolution_clock::now();
-    map<string,int> hand_posibilities = calculate_hand_frecuency(current_hand,2);
-    //Hand result = get_best_hand(current_hand);
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<nanoseconds>(stop - start);
-    // Print result
-    // cout << result.hand_type;
-    // print_cards(result.Cards,5);
-    // Print posibilities
-    for (int i = 0; i < 10; i++)
-    {
-        cout << posible_hand_types[i] << "->\n\t Frecuency: " << hand_posibilities[posible_hand_types[i]] << "\n\t Probability: " ;
-        cout << ((float) hand_posibilities[posible_hand_types[i]] / (float) hand_posibilities["Total Cases"])*100 <<"%\n" << endl;
-    }
-    cout << duration.count() << endl;
-    return 0;
+    //hand_posibilities["Total Cases"] = num_posible_cases;
+    return players_hand_posibilities;
 }
 
 
