@@ -1,2 +1,3 @@
-# Project Idea
-This is a project to implement a competent poker AI using diferent methods
+# Poker Probs
+
+A python module writen in C++ for caculating poker odds in under a second 
