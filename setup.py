@@ -33,6 +33,10 @@ setup(
     description="A test project using pybind11",
     long_description="",
     ext_modules=ext_modules,
+    # packages=["poker_probs", "unohelper"],
+    package_data={
+        "poker_probs":["py.typed","__init__.pyi"],
+    },
     extras_require={"test": "pytest"},
     # Currently, build_ext only provides an optional "highest supported C++
     # level" feature, but in the future it may provide more features.

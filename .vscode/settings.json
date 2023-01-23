@@ -62,6 +62,7 @@
         "xlocmon": "cpp",
         "xloctime": "cpp",
         "xmemory": "cpp",
-        "xstddef": "cpp"
+        "xstddef": "cpp",
+        "array": "cpp"
     }
 }

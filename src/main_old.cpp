@@ -4,7 +4,6 @@
 #include <chrono>
 #include <vector>
 #include <map>
-#include <array>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -21,7 +20,7 @@ struct Card{
 
 struct Hand{
     string hand_type;
-    array<Card,5> Cards;
+    Card Cards[5];
 };
 
 void print_cards(Card cards[7], int num_cards){
@@ -33,39 +32,39 @@ void print_cards(Card cards[7], int num_cards){
     cout << endl;
 }
 
-Hand get_best_hand(array<Card,7> cards){
+Hand get_best_hand(Card cards[7]){
     //print_cards(cards,7);
     // Sort the cards
-    sort(cards.begin(),cards.end(),[](Card &a,Card &b){return a.value > b.value;});
+    sort(cards,cards+7,[](Card &a,Card &b){return a.value > b.value;});
     // Divide the cards by color
-    array<array<Card,7>,4> color_cards;
-    array<int,4> num_color_cards = {0,0,0,0};
+    Card color_cards[4][7];
+    int num_color_cards[4] = {0,0,0,0};
     color_cards[cards[0].color][0] = cards[0];
     num_color_cards[cards[0].color]++;
     // To get the straights
-    array<Card,5> current_straight;
+    Card current_straight[5];
     current_straight[0] = cards[0];
     int current_straight_size = 1;
-    array<Card,5> straight;
+    Card straight[5];
     bool found_straight = false;
     // To get straight flushes
-    array<array<Card,5>,4> straight_flushes;
+    Card straight_flushes[4][7];
     straight_flushes[cards[0].color][0] = cards[0];
-    array<int,4> straight_flushes_sizes = {0,0,0,0};
+    int straight_flushes_sizes[4] = {0,0,0,0};
     straight_flushes_sizes[cards[0].color] += 1;
-    array<Card,5> straight_flush;
+    Card straight_flush[5];
     bool found_straight_flush = false;
     // To get rest of groupings
-    array<array<Card,2>,3> pairs;
+    Card pairs[3][2];
     int num_pairs = 0;
-    array<array<Card,3>,2> triples;
+    Card triples[2][3];
     int num_triples = 0;
-    array<Card,4> pokers;
+    Card pokers[4];
     bool found_poker = false;
-    array<Card,7> individuals;
+    Card individuals[7];
     int num_individuals = 0;
     // Temporary variables;
-    array<Card,4> group;
+    Card group[4];
     int group_size = 1;
     group[0] = cards[0];
     Card last_card = cards[0];
@@ -89,11 +88,16 @@ Hand get_best_hand(array<Card,7> cards){
                 num_pairs++;
                 break;
             case 3:
-                copy(group.begin(),group.begin()+3,triples[num_triples].begin());
+                triples[num_triples][0] = group[0];
+                triples[num_triples][1] = group[1];
+                triples[num_triples][2] = group[2];
                 num_triples++;
                 break;
             case 4:
-                pokers = group;
+                pokers[0] = group[0];
+                pokers[1] = group[1];
+                pokers[2] = group[2];
+                pokers[3] = group[3];
                 found_poker = true;
                 break;
             }
@@ -101,20 +105,17 @@ Hand get_best_hand(array<Card,7> cards){
             group[0] = cards[i];
         }
         // Search for straights
-        if (!found_straight){
-            if (last_card.value - cards[i].value == 1){
-                current_straight[current_straight_size] = cards[i];
-                current_straight_size++;
-            }else if (cards[i].value != last_card.value){
-                current_straight_size = 1;
-                current_straight[0] = cards[i];
-            }
-            if (current_straight_size == 5){
-                straight = current_straight;
-                //copy(current_straight,current_straight+5,straight);
-                current_straight_size = 0;
-                found_straight = true;
-            }
+        if (last_card.value - cards[i].value == 1){
+            current_straight[current_straight_size] = cards[i];
+            current_straight_size++;
+        }else if (cards[i].value != last_card.value){
+            current_straight_size = 1;
+            current_straight[0] = cards[i];
+        }
+        if (current_straight_size == 5){
+            copy(current_straight,current_straight+5,straight);
+            current_straight_size = 0;
+            found_straight = true;
         }
         // Search for flushes
         color_cards[cards[i].color][num_color_cards[cards[i].color]] = cards[i];
@@ -125,8 +126,7 @@ Hand get_best_hand(array<Card,7> cards){
                 straight_flushes[cards[i].color][straight_flushes_sizes[cards[i].color]] = cards[i];
                 straight_flushes_sizes[cards[i].color]++;
                 if (straight_flushes_sizes[cards[i].color] == 5){
-                    straight_flush = straight_flushes[cards[i].color];
-                    //copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+5,straight_flush);
+                    copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+5,straight_flush);
                     found_straight_flush = true;
                     straight_flushes_sizes[cards[i].color] = 0;
                 }
@@ -152,11 +152,16 @@ Hand get_best_hand(array<Card,7> cards){
         num_pairs++;
         break;
     case 3:
-        copy(group.begin(),group.begin()+3,triples[num_triples].begin());
+        triples[num_triples][0] = group[0];
+        triples[num_triples][1] = group[1];
+        triples[num_triples][2] = group[2];
         num_triples++;
         break;
     case 4:
-        pokers = group;
+        pokers[0] = group[0];
+        pokers[1] = group[1];
+        pokers[2] = group[2];
+        pokers[3] = group[3];
         found_poker = true;
         break;
     }
@@ -168,7 +173,7 @@ Hand get_best_hand(array<Card,7> cards){
             if (cards[i].value != 13){
                 break;
             }else if (straight_flushes_sizes[cards[i].color] == 4 && straight_flushes[cards[i].color][0].value == 4){
-                copy(straight_flushes[cards[i].color].begin(),straight_flushes[cards[i].color].begin()+4,straight_flush.begin());
+                copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+4,straight_flush);
                 straight_flush[4] = cards[i];
                 found_straight_flush = true;
                 break;
@@ -184,14 +189,13 @@ Hand get_best_hand(array<Card,7> cards){
         }else{
             result.hand_type = "Straight Flush";
         }
-        result.Cards = straight_flush;
-        // copy(straight_flush,straight_flush+5,result.Cards);
+        copy(straight_flush,straight_flush+5,result.Cards);
         return result;
     }
 
     if (found_poker){
         result.hand_type = "Poker";
-        copy(pokers.begin(),pokers.end(),result.Cards.begin());
+        copy(pokers,pokers+4,result.Cards);
         for(int i=0; i<7; i++){
             if (cards[i].value != pokers[0].value){
                 result.Cards[4] = cards[i];
@@ -203,13 +207,13 @@ Hand get_best_hand(array<Card,7> cards){
     
     if (num_triples > 0 && num_pairs > 0){
         result.hand_type = "Full House";
-        copy(triples[0].begin(),triples[0].end(),result.Cards.begin());
+        copy(triples[0],triples[0]+3,result.Cards);
         result.Cards[3] = pairs[0][0];
         result.Cards[4] = pairs[0][1];
         return result;
     }else if(num_triples == 2){
         result.hand_type = "Full House";
-        copy(triples[0].begin(),triples[0].end(),result.Cards.begin());
+        copy(triples[0],triples[0]+3,result.Cards);
         result.Cards[3] = triples[1][0];
         result.Cards[4] = triples[1][1];
         return result;
@@ -219,28 +223,27 @@ Hand get_best_hand(array<Card,7> cards){
     {
         if (num_color_cards[i] >= 5){
             result.hand_type = "Flush";
-            copy(color_cards[i].begin(),color_cards[i].end()+5,result.Cards.begin());
+            copy(color_cards[i],color_cards[i]+5,result.Cards);
             return result;
         }
     }
     
     // Check if the straight form with an ACE
     if (!found_straight && current_straight_size == 4 && current_straight[3].value == 1 && cards[0].value == 13){
-        copy(current_straight.begin(),current_straight.begin()+4,straight.begin());
+        copy(current_straight,current_straight+4,straight);
         found_straight = true;
         straight[4] = cards[0];
     }
     
     if (found_straight){
         result.hand_type = "Straight";
-        result.Cards = straight;
-        //copy(straight,straight+5,result.Cards);
+        copy(straight,straight+5,result.Cards);
         return result;
     }
 
     if (num_triples == 1){
         result.hand_type = "Triples";
-        copy(triples[0].begin(),triples[0].begin()+3,result.Cards.begin());
+        copy(triples[0],triples[0]+3,result.Cards);
         result.Cards[3] = individuals[0];
         result.Cards[4] = individuals[1];
         return result;
@@ -266,7 +269,7 @@ Hand get_best_hand(array<Card,7> cards){
         return result;
     }
     result.hand_type = "High Card";
-    copy(individuals.begin(),individuals.begin()+5,result.Cards.begin());
+    copy(individuals,individuals+5,result.Cards);
     return result;
 }
 
@@ -277,8 +280,8 @@ Card create_card(int color, int value){
     return c;
 }
 
-map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_given_cards){
-    array<Card,7> new_hand;
+map<string,int> calculate_hand_frecuency(Card current_hand[7],int num_given_cards){
+    Card new_hand[7];
     string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
     // Create the map with the hand_types and the number of hands of that type
     map<string,int> hand_posibilities;
@@ -319,8 +322,7 @@ map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_give
         current_hand[num_given_cards+i] = posible_cards[indexes[i]];
     }
     int num_posible_cases = 1;
-    new_hand = current_hand;
-    //copy(current_hand,current_hand+7,new_hand);
+    copy(current_hand,current_hand+7,new_hand);
     result = get_best_hand(new_hand);
     hand_posibilities[result.hand_type]++;
     while (indexes[0] != N-n){
@@ -341,8 +343,7 @@ map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_give
         {
             current_hand[num_given_cards+i] = posible_cards[indexes[i]];
         }
-        new_hand = current_hand;
-        //copy(current_hand,current_hand+7,new_hand);
+        copy(current_hand,current_hand+7,new_hand);
         result = get_best_hand(new_hand);
         hand_posibilities[result.hand_type]++;
         num_posible_cases++;
@@ -353,7 +354,7 @@ map<string,int> calculate_hand_frecuency(array<Card,7> current_hand,int num_give
 
 int test(){
     string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
-    array<Card,7> current_hand = {create_card(1,2),create_card(2,2)};
+    Card current_hand[7] = {create_card(1,2),create_card(2,2)};
     //Card current_hand[7] = {create_card(1,2),create_card(2,2),create_card(3,2),create_card(1,4),create_card(3,5),create_card(1,10),create_card(0,7)};
     auto start = high_resolution_clock::now();
     map<string,int> hand_posibilities = calculate_hand_frecuency(current_hand,2);
@@ -374,16 +375,21 @@ int test(){
 }
 
 
+int add(int i, int j) {
+    return i + j;
+}
+
+
 PYBIND11_MODULE(poker_probs, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
         .def(py::init<int,int>())
         .def_readwrite("value", &Card::value)
         .def_readwrite("color", &Card::color);
-    py::class_<Hand>(m, "Hand")
-        .def(py::init<string,array<Card,5>>())
-        .def_readwrite("hand_type", &Hand::hand_type)
-        .def_readwrite("Cards", &Hand::Cards);
+    //py::class_<Hand>(m, "Hand")
+        // .def(py::init<string,Card[5]>())
+        // .def_readwrite("hand_type", &Hand::hand_type)
+        // .def_readwrite("Cards", &Hand::Cards);
     m.def("get_best_hand", &get_best_hand, "A function that gets the best hands given 7 cards");
-    m.def("calculate_hand_frecuency", &calculate_hand_frecuency, "A function that gets the frecuencies of the possible hands given any number of cards");
+    m.def("add", &add, "A function that adds two numbers");
 }
