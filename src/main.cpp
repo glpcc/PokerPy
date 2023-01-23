@@ -2,10 +2,14 @@
 #include <iostream>
 #include <algorithm>
 #include <chrono>
+#include <vector>
+#include <map>
+#include <pybind11/pybind11.h>
 
 
 using namespace std::chrono;
 using namespace std;
+namespace py = pybind11;
 
 struct Card{
     // 1 to 13 (2 to A)
@@ -19,14 +23,17 @@ struct Hand{
     Card Cards[5];
 };
 
-void print_cards(Card cards[7]){
-    for(auto i=0; i<5; i++)
+void print_cards(Card cards[7], int num_cards){
+    cout << "Cards:\n";
+    for(auto i=0; i<num_cards; i++)
 	{
 		cout<<cards[i].value << " " << cards[i].color << "\n";
 	}
+    cout << endl;
 }
 
 Hand get_best_hand(Card cards[7]){
+    //print_cards(cards,7);
     // Sort the cards
     sort(cards,cards+7,[](Card &a,Card &b){return a.value > b.value;});
     // Divide the cards by color
@@ -98,7 +105,7 @@ Hand get_best_hand(Card cards[7]){
             group[0] = cards[i];
         }
         // Search for straights
-        if (cards[i].value - last_card.value == 1){
+        if (last_card.value - cards[i].value == 1){
             current_straight[current_straight_size] = cards[i];
             current_straight_size++;
         }else if (cards[i].value != last_card.value){
@@ -148,12 +155,14 @@ Hand get_best_hand(Card cards[7]){
         triples[num_triples][0] = group[0];
         triples[num_triples][1] = group[1];
         triples[num_triples][2] = group[2];
+        num_triples++;
         break;
     case 4:
         pokers[0] = group[0];
         pokers[1] = group[1];
         pokers[2] = group[2];
         pokers[3] = group[3];
+        found_poker = true;
         break;
     }
     // Check for straight flushes
@@ -271,24 +280,110 @@ Card create_card(int color, int value){
     return c;
 }
 
-int main(){
-    Card current_hand[7] = {create_card(1,12),create_card(2,4),create_card(1,10),create_card(1,11),create_card(1,9),create_card(2,7),create_card(1,13)};
-    string posible_hand_types[12] = {"Straight Flush","Royal Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
-    auto start = high_resolution_clock::now();
-    Hand result;
-    // Iterate over the combinations
-    // 2118760
-    // result = get_best_hand(current_hand);
-    for (int i = 0; i < 2118760; i++)
+map<string,int> calculate_hand_frecuency(Card current_hand[7],int num_given_cards){
+    Card new_hand[7];
+    string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
+    // Create the map with the hand_types and the number of hands of that type
+    map<string,int> hand_posibilities;
+    for (int i = 0; i < 10; i++)
     {
-        result = get_best_hand(current_hand);
+        hand_posibilities[posible_hand_types[i]] = 0;
     }
-    cout << "Holaaa" << endl;
+    Hand result;
+    // Create all posible cards
+    // TODO If there are other players cards change this posible cards
+    vector<Card> posible_cards;
+    for (size_t i = 0; i < 4; i++)
+    {
+        for (size_t j = 1; j < 14; j++)
+        {
+            Card new_card;
+            bool alredy_in_hand = false;
+            for (size_t k = 0; k < num_given_cards; k++)
+            {
+                if (current_hand[k].value == j && current_hand[k].color == i){
+                    alredy_in_hand = true;
+                    break;
+                }
+            }
+            if (!alredy_in_hand){
+                new_card.value = j;
+                new_card.color = i;
+                posible_cards.push_back(new_card);
+            }
+        }
+        
+    }
+    int indexes[5] = {0,1,2,3,4};
+    int n = (7-num_given_cards);
+    int N = posible_cards.size();
+    for (size_t i = 0; i < n; i++)
+    {
+        current_hand[num_given_cards+i] = posible_cards[indexes[i]];
+    }
+    int num_posible_cases = 1;
+    copy(current_hand,current_hand+7,new_hand);
+    result = get_best_hand(new_hand);
+    hand_posibilities[result.hand_type]++;
+    while (indexes[0] != N-n){
+        // Create a new combination of indexes
+        // Iterate backwards through the indexes
+        for (int i = 1; i <= n ; i++) {
+            // Check if index can be aumented 
+            if (indexes[n-i] < N-i) {
+                indexes[n-i]++;
+                // Go through the following indexes to reduce them to the minimum posible value
+                for (int j = n-i+1; j < n; j++) {
+                    indexes[j] = indexes[j-1] + 1;
+                }
+                break;
+            }
+        }
+        for (int i = 0; i < n; i++)
+        {
+            current_hand[num_given_cards+i] = posible_cards[indexes[i]];
+        }
+        copy(current_hand,current_hand+7,new_hand);
+        result = get_best_hand(new_hand);
+        hand_posibilities[result.hand_type]++;
+        num_posible_cases++;
+    }
+    hand_posibilities["Total Cases"] = num_posible_cases;
+    return hand_posibilities;
+}
+
+int test(){
+    string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
+    Card current_hand[7] = {create_card(1,2),create_card(2,2)};
+    //Card current_hand[7] = {create_card(1,2),create_card(2,2),create_card(3,2),create_card(1,4),create_card(3,5),create_card(1,10),create_card(0,7)};
+    auto start = high_resolution_clock::now();
+    map<string,int> hand_posibilities = calculate_hand_frecuency(current_hand,2);
+    //Hand result = get_best_hand(current_hand);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<nanoseconds>(stop - start);
-    //cout << duration.count()*2118760 << endl;
+    // Print result
+    // cout << result.hand_type;
+    // print_cards(result.Cards,5);
+    // Print posibilities
+    for (int i = 0; i < 10; i++)
+    {
+        cout << posible_hand_types[i] << "->\n\t Frecuency: " << hand_posibilities[posible_hand_types[i]] << "\n\t Probability: " ;
+        cout << ((float) hand_posibilities[posible_hand_types[i]] / (float) hand_posibilities["Total Cases"])*100 <<"%\n" << endl;
+    }
     cout << duration.count() << endl;
-    cout << result.hand_type << endl;
-    print_cards(result.Cards);
     return 0;
+}
+
+int main(){
+    return 0;
+} 
+
+int add(int i, int j) {
+    return i + j;
+}
+
+PYBIND11_MODULE(poker_probs, m) {
+    m.doc() = "pybind11 example plugin"; // optional module docstring
+
+    m.def("add", &add, "A function that adds two numbers");
 }
