@@ -8,13 +8,13 @@ __version__ = "0.0.1"
 
 
 ext_modules = [
-    Pybind11Extension("poker_probs",
+    Pybind11Extension("PokerPy",
         ["src/main.cpp"],
         ),
 ]
 
 setup(
-    name="poker_probs",
+    name="PokerPy",
     version=__version__,
     author="Gonzalo Lope",
     author_email="gonzalolopecc@gmail.com",
@@ -24,7 +24,7 @@ setup(
     ext_modules=ext_modules,
     # packages=["poker_probs", "unohelper"],
     package_data={
-        "poker_probs":["py.typed","__init__.pyi"],
+        "PokerPy":["py.typed","__init__.pyi"],
     },
     extras_require={"test": "pytest"},
     # Currently, build_ext only provides an optional "highest supported C++

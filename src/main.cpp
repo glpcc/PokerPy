@@ -24,7 +24,7 @@ struct Hand{
     array<Card,5> Cards;
 };
 
-void print_cards(Card cards[7], int num_cards){
+void print_cards(array<Card,7> cards, int num_cards){
     cout << "Cards:\n";
     for(auto i=0; i<num_cards; i++)
 	{
@@ -34,9 +34,7 @@ void print_cards(Card cards[7], int num_cards){
 }
 
 Hand get_best_hand(array<Card,7> cards){
-    //print_cards(cards,7);
-    // Sort the cards
-    sort(cards.begin(),cards.end(),[](Card &a,Card &b){return a.value > b.value;});
+    // WARNING This function assumes the cards are sorted before hand
     // Divide the cards by color
     array<array<Card,7>,4> color_cards;
     array<int,4> num_color_cards = {0,0,0,0};
@@ -278,14 +276,18 @@ Card create_card(int color, int value){
 }
 
 vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
+
     int num_given_cards = cards[0].size();
     vector<array<Card,7>> players_cards;
+    // Sort the cards and plaace them in arrays of 7 cards
     for (int i = 0; i < cards.size(); i++)
     {
         array<Card,7> temp;
+        sort(cards[i].begin(),cards[i].end(),[](Card &a,Card &b){return a.value > b.value;});
         copy(cards[i].begin(),cards[i].end(),temp.begin());
         players_cards.push_back(temp);
     }
+    // Create the new hand array for passing it to the get_best_hand Function
     array<Card,7> new_hand;
     string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
     // Create the map with the hand_types and the number of hands of that type
@@ -302,11 +304,10 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
     }
     Hand result;
     // Create all posible cards
-    // TODO If there are other players cards change this posible cards
     vector<Card> posible_cards;
-    for (int i = 0; i < 4; i++)
+    for (int j = 13; j > 0; j--)
     {
-        for (int j = 1; j < 14; j++)
+        for (int i = 0; i < 4; i++)
         {
             Card new_card;
             bool alredy_in_hand = false;
@@ -328,17 +329,33 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         }
         
     }
+    
     int indexes[5] = {0,1,2,3,4};
     int n = (7-num_given_cards);
     int N = posible_cards.size();
     int num_posible_cases = 1;
+    int intersected_cards = 0;
     for (int l = 0; l < players_cards.size(); l++)
     {
-        for (size_t i = 0; i < n; i++)
+        // Sort efficiently the hand cards for efficiency
+        intersected_cards = 0;
+        for (size_t i = 0; i < 7; i++)
         {
-            players_cards[l][num_given_cards+i] = posible_cards[indexes[i]];
+            if (intersected_cards < num_given_cards){
+                if (i-intersected_cards >= n){
+                    new_hand[i] = players_cards[l][intersected_cards];
+                    intersected_cards++;
+                    continue;
+                }
+                if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
+                    new_hand[i] = players_cards[l][intersected_cards];
+                    intersected_cards++;
+                    continue;
+                }
+            }
+
+            new_hand[i] = posible_cards[indexes[i-intersected_cards]];
         }
-        new_hand = players_cards[l];
         result = get_best_hand(new_hand);
         players_hand_posibilities[l][result.hand_type]++;
     }
@@ -358,12 +375,24 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         }
         for (int l = 0; l < players_cards.size(); l++)
         {
-            for (int i = 0; i < n; i++)
+            // Sort efficiently the hand cards for efficiency
+            intersected_cards = 0;
+            for (size_t i = 0; i < 7; i++)
             {
-                players_cards[l][num_given_cards+i] = posible_cards[indexes[i]];
+                if (intersected_cards < num_given_cards){
+                    if (i-intersected_cards >= n){
+                        new_hand[i] = players_cards[l][intersected_cards];
+                        intersected_cards++;
+                        continue;
+                    }
+                    if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
+                        new_hand[i] = players_cards[l][intersected_cards];
+                        intersected_cards++;
+                        continue;
+                    }
+                }
+                new_hand[i] = posible_cards[indexes[i-intersected_cards]];
             }
-            new_hand = players_cards[l];
-            //copy(current_hand,current_hand+7,new_hand);
             result = get_best_hand(new_hand);
             players_hand_posibilities[l][result.hand_type]++;
         }
@@ -373,13 +402,13 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
     return players_hand_posibilities;
 }
 
-
-PYBIND11_MODULE(poker_probs, m) {
+PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
         .def(py::init<int,int>())
         .def_readwrite("value", &Card::value)
-        .def_readwrite("color", &Card::color);
+        .def_readwrite("color", &Card::color)
+        .def("__repr__",[](Card a){return "Card: "+to_string(a.value)+to_string(a.color);});
     py::class_<Hand>(m, "Hand")
         .def(py::init<string,array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
