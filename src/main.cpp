@@ -7,6 +7,7 @@
 #include <array>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <stdint.h>
 
 using namespace std::chrono;
 using namespace std;
@@ -275,6 +276,93 @@ Card create_card(int color, int value){
     return c;
 }
 
+map<string,int> hand_value = {
+    {"Royal Flush",10},{"Straight Flush",9},{"Poker",8},{"Full House",7},{"Flush",6},{"Straight",5},{"Triples",4},{"Double Pairs",3},{"Pairs",2},{"High Card",1}
+};
+int calculate_hand_heuristic(Hand player_hand){
+    // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
+    int64_t result = 0;
+    result += hand_value[player_hand.hand_type];
+    switch (result)
+    {
+    case 10:
+        result = result << 5*4;
+        break;
+    case 9:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4*4;
+        break;
+    case 8:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4;
+        result += player_hand.Cards[4].value;
+        result = result << 3*4;
+        break;
+    case 7:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4;
+        result += player_hand.Cards[3].value;
+        result = result << 3*4;
+        break;
+    case 6:
+        result = result << 4;
+        for (int i = 0; i < 5; i++)
+        {
+            result += player_hand.Cards[i].value;
+            result = result << 4;
+        }
+        break;
+    case 5:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4*4;
+        break;
+    case 4:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4;
+        result += player_hand.Cards[3].value;
+        result = result << 4;
+        result += player_hand.Cards[4].value;
+        result = result << 4*2;
+        break;
+    case 3:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4;
+        result += player_hand.Cards[2].value;
+        result = result << 4;
+        result += player_hand.Cards[4].value;
+        result = result << 4*2;
+        break;
+    case 2:
+        result = result << 4;
+        result += player_hand.Cards[0].value;
+        result = result << 4;
+        for (int i = 0; i < 3; i++)
+        {
+            result += player_hand.Cards[i+2].value;
+            result = result << 4;
+        }
+        break;
+    case 1:
+        result = result << 4;
+        for (int i = 0; i < 5; i++)
+        {
+            result += player_hand.Cards[i].value;
+            result = result << 4;
+        }
+        break;
+    default:
+        break;
+    }
+    return result;
+}
+
+
 vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
 
     int num_given_cards = cards[0].size();
@@ -297,6 +385,8 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
     {
         hand_posibilities[posible_hand_types[i]] = 0;
     }
+    hand_posibilities["Win"] = 0;
+    hand_posibilities["Draw"] = 0;
     for (int l = 0; l < players_cards.size(); l++)
     {
         players_hand_posibilities.push_back(hand_posibilities);
@@ -335,44 +425,11 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
     int N = posible_cards.size();
     int num_posible_cases = 1;
     int intersected_cards = 0;
-    for (int l = 0; l < players_cards.size(); l++)
-    {
-        // Sort efficiently the hand cards for efficiency
-        intersected_cards = 0;
-        for (size_t i = 0; i < 7; i++)
-        {
-            if (intersected_cards < num_given_cards){
-                if (i-intersected_cards >= n){
-                    new_hand[i] = players_cards[l][intersected_cards];
-                    intersected_cards++;
-                    continue;
-                }
-                if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
-                    new_hand[i] = players_cards[l][intersected_cards];
-                    intersected_cards++;
-                    continue;
-                }
-            }
-
-            new_hand[i] = posible_cards[indexes[i-intersected_cards]];
-        }
-        result = get_best_hand(new_hand);
-        players_hand_posibilities[l][result.hand_type]++;
-    }
-    while (indexes[0] != N-n){
-        // Create a new combination of indexes
-        // Iterate backwards through the indexes
-        for (int i = 1; i <= n ; i++) {
-            // Check if index can be aumented 
-            if (indexes[n-i] < N-i) {
-                indexes[n-i]++;
-                // Go through the following indexes to reduce them to the minimum posible value
-                for (int j = n-i+1; j < n; j++) {
-                    indexes[j] = indexes[j-1] + 1;
-                }
-                break;
-            }
-        }
+    int player_hand_euristic = 0;
+    array<int,10> drawed_players_indx = {};
+    while (true){
+        int max_hand_heuristic = 0;
+        int drawed_players = 0;
         for (int l = 0; l < players_cards.size(); l++)
         {
             // Sort efficiently the hand cards for efficiency
@@ -395,8 +452,47 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
             }
             result = get_best_hand(new_hand);
             players_hand_posibilities[l][result.hand_type]++;
+            // Check if win or draw
+            player_hand_euristic = calculate_hand_heuristic(result);
+            if (player_hand_euristic > max_hand_heuristic){
+                max_hand_heuristic = player_hand_euristic;
+                drawed_players = 1;
+                drawed_players_indx[0] = l;
+            }else if (player_hand_euristic == max_hand_heuristic){
+                drawed_players_indx[drawed_players] = l;
+                drawed_players++;
+            }
+        }
+        if (drawed_players == 1){
+            players_hand_posibilities[drawed_players_indx[0]]["Win"]++;
+        }else{
+            for (int i = 0; i < drawed_players; i++)
+            {
+                players_hand_posibilities[drawed_players_indx[i]]["Draw"]++;
+            }
         }
         num_posible_cases++;
+        if (indexes[0] == N-n){
+            break;
+        }
+        // Create a new combination of indexes
+        // Iterate backwards through the indexes
+        for (int i = 1; i <= n ; i++) {
+            // Check if index can be aumented 
+            if (indexes[n-i] < N-i) {
+                indexes[n-i]++;
+                // Go through the following indexes to reduce them to the minimum posible value
+                for (int j = n-i+1; j < n; j++) {
+                    indexes[j] = indexes[j-1] + 1;
+                }
+                break;
+            }
+        }
+    }
+    for (int l = 0; l < players_cards.size(); l++)
+    {
+        players_hand_posibilities[l]["Total Cases"] = num_posible_cases;
+
     }
     //hand_posibilities["Total Cases"] = num_posible_cases;
     return players_hand_posibilities;

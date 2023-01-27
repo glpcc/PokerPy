@@ -17,13 +17,12 @@ def generate_random_hands(num_cards: int,num_players: int)-> list[list[PokerPy.C
 
 
 
-test_hand = generate_random_hands(2,5) 
+test_hand = generate_random_hands(2,10) 
 print(test_hand)
 t1 = perf_counter_ns()
-print(PokerPy.calculate_hand_frecuency2(test_hand))
-print(perf_counter_ns()-t1)
-t1 = perf_counter_ns()
-# print(PokerPy.calculate_hand_frecuency([a[0:2],a[2:4],a[4:6],a[6:8]]))
-print(PokerPy.calculate_hand_frecuency(test_hand))
+frecs = PokerPy.calculate_hand_frecuency(test_hand)
+print(frecs)
+for i in range(len(frecs)):
+    print(f"Player {i}: Wins: {(frecs[i]['Win']/frecs[i]['Total Cases'])*100:.2f}% ,Draws: {(frecs[i]['Draw']/frecs[i]['Total Cases'])*100:.2f}%")
 print(perf_counter_ns()-t1)
 
