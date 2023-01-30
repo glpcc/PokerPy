@@ -33,6 +33,14 @@ void print_cards(array<Card,7> cards, int num_cards){
 	}
     cout << endl;
 }
+void print5_cards(array<Card,5> cards, int num_cards){
+    cout << "Cards:\n";
+    for(auto i=0; i<num_cards; i++)
+	{
+		cout<<cards[i].value << " " << cards[i].color << "\n";
+	}
+    cout << endl;
+}
 
 Hand get_best_hand(array<Card,7> cards){
     // WARNING This function assumes the cards are sorted before hand
@@ -69,7 +77,7 @@ Hand get_best_hand(array<Card,7> cards){
     group[0] = cards[0];
     Card last_card = cards[0];
     // Iterate through the sorted cards to extract the posible hands
-    for(auto i=1; i<7; i++)
+    for(int i=1; i<7; i++)
 	{
         // Search for pairs,triples,etc
         if (cards[i].value == last_card.value){
@@ -79,7 +87,7 @@ Hand get_best_hand(array<Card,7> cards){
             switch (group_size)
             {
             case 1:
-                individuals[num_individuals] = cards[i];
+                individuals[num_individuals] = group[0];
                 num_individuals++;
                 break;
             case 2:
@@ -135,6 +143,7 @@ Hand get_best_hand(array<Card,7> cards){
             }
         }else{
             straight_flushes[cards[i].color][0] = cards[i];
+            straight_flushes_sizes[cards[i].color]++;
         }
 		last_card = cards[i];
 	}
@@ -233,7 +242,6 @@ Hand get_best_hand(array<Card,7> cards){
     if (found_straight){
         result.hand_type = "Straight";
         result.Cards = straight;
-        //copy(straight,straight+5,result.Cards);
         return result;
     }
 
@@ -279,6 +287,7 @@ Card create_card(int color, int value){
 map<string,int> hand_value = {
     {"Royal Flush",10},{"Straight Flush",9},{"Poker",8},{"Full House",7},{"Flush",6},{"Straight",5},{"Triples",4},{"Double Pairs",3},{"Pairs",2},{"High Card",1}
 };
+
 int calculate_hand_heuristic(Hand player_hand){
     // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
     int64_t result = 0;
@@ -309,11 +318,12 @@ int calculate_hand_heuristic(Hand player_hand){
         break;
     case 6:
         result = result << 4;
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 4; i++)
         {
             result += player_hand.Cards[i].value;
             result = result << 4;
         }
+        result += player_hand.Cards[4].value;
         break;
     case 5:
         result = result << 4;
@@ -350,13 +360,12 @@ int calculate_hand_heuristic(Hand player_hand){
         break;
     case 1:
         result = result << 4;
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 4; i++)
         {
             result += player_hand.Cards[i].value;
             result = result << 4;
         }
-        break;
-    default:
+        result += player_hand.Cards[4].value;
         break;
     }
     return result;
@@ -459,6 +468,11 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
                 drawed_players = 1;
                 drawed_players_indx[0] = l;
             }else if (player_hand_euristic == max_hand_heuristic){
+  
+                // print_cards(new_hand,7);
+                // cout << result.hand_type << "\n";
+                // cout << player_hand_euristic << "\n";
+                // print5_cards(result.Cards,5);
                 drawed_players_indx[drawed_players] = l;
                 drawed_players++;
             }
@@ -468,6 +482,12 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         }else{
             for (int i = 0; i < drawed_players; i++)
             {
+                if (players_hand_posibilities[drawed_players_indx[i]]["Draw"] %1000 == 0){
+                    print_cards(new_hand,7);
+                    cout << result.hand_type << "\n";
+                    cout << player_hand_euristic << "\n";
+                    print5_cards(result.Cards,5);
+                }
                 players_hand_posibilities[drawed_players_indx[i]]["Draw"]++;
             }
         }
