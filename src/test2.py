@@ -2,7 +2,7 @@ import PokerPy
 from time import perf_counter_ns
 import random
 
-random.seed(10)
+random.seed(11)
 HAND_TYPES = {
     "Royal Flush":1,
     "Straight Flush":0,
@@ -39,6 +39,12 @@ def generate_random_hands(num_cards: int,num_players: int)-> list[list[PokerPy.C
     return res
 
 
+test_hand = PokerPy.Hand('Straight',[PokerPy.Card(12,1),PokerPy.Card(11,3),PokerPy.Card(10,0),PokerPy.Card(9,0),PokerPy.Card(8,0)])
+
+print(PokerPy.calculate_hand_heuristic(test_hand))
+
+
+
 num_players = 2
 test_hand = generate_random_hands(2,num_players)
 print(test_hand)
@@ -46,17 +52,17 @@ test = sorted([PokerPy.Card(12,1),PokerPy.Card(8,3),PokerPy.Card(12,0),PokerPy.C
 print(test)
 print(PokerPy.get_best_hand(test).Cards)
 print(PokerPy.get_best_hand(test).hand_type)
-# t1 = perf_counter_ns()
-# frecs = PokerPy.calculate_hand_frecuency(test_hand)
-# print(frecs)
-# for i in range(len(frecs)):
-#     print(f"Player {i}: Wins: {(frecs[i]['Win']/frecs[i]['Total Cases'])*100:.2f}% ,Draws: {(frecs[i]['Draw']/frecs[i]['Total Cases'])*100:.2f}%")
-# a = '\t'
-# for i in HAND_TYPES:
-#     print(f"{i}:{a*(1 if len(i) > 5 else 2)}",end="")
-#     for j in range(num_players):
-#         print(f"{(frecs[j][i]/frecs[j]['Total Cases'])*100:.2f}%\t",end="")
-#     print()
-# print(test_hand)
-# print(perf_counter_ns()-t1)
+t1 = perf_counter_ns()
+frecs = PokerPy.calculate_hand_frecuency(test_hand)
+print(frecs)
+for i in range(len(frecs)):
+    print(f"Player {i}: Wins: {(frecs[i]['Win']/frecs[i]['Total Cases'])*100:.2f}% ,Draws: {(frecs[i]['Draw']/frecs[i]['Total Cases'])*100:.2f}%")
+a = '\t'
+for i in HAND_TYPES:
+    print(f"{i}:{a*(1 if len(i) > 5 else 2)}",end="")
+    for j in range(num_players):
+        print(f"{(frecs[j][i]/frecs[j]['Total Cases'])*100:.2f}%\t",end="")
+    print()
+print(test_hand)
+print(perf_counter_ns()-t1)
 

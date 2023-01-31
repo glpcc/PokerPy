@@ -22,6 +22,9 @@ setup(
     description="A fast poker probabilities calculator.",
     long_description="",
     ext_modules=ext_modules,
+    install_requires=[
+        'pybind11'
+    ],
     # packages=["poker_probs", "unohelper"],
     package_data={
         "PokerPy":["py.typed","__init__.pyi"],

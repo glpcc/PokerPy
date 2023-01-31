@@ -1,7 +1,6 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include <chrono>
 #include <vector>
 #include <map>
 #include <array>
@@ -9,7 +8,7 @@
 #include <pybind11/stl.h>
 #include <stdint.h>
 
-using namespace std::chrono;
+
 using namespace std;
 namespace py = pybind11;
 
@@ -227,7 +226,7 @@ Hand get_best_hand(array<Card,7> cards){
     {
         if (num_color_cards[i] >= 5){
             result.hand_type = "Flush";
-            copy(color_cards[i].begin(),color_cards[i].end()+5,result.Cards.begin());
+            copy(color_cards[i].begin(),color_cards[i].begin()+5,result.Cards.begin());
             return result;
         }
     }
@@ -429,13 +428,13 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         
     }
     
-    int indexes[5] = {0,1,2,3,4};
+    array<int,5> indexes = {0,1,2,3,4};
     int n = (7-num_given_cards);
     int N = posible_cards.size();
     int num_posible_cases = 1;
     int intersected_cards = 0;
     int player_hand_euristic = 0;
-    array<int,10> drawed_players_indx = {};
+    array<int,10> drawed_players_indx = {0,0,0,0,0,0,0,0,0,0};
     while (true){
         int max_hand_heuristic = 0;
         int drawed_players = 0;
@@ -443,15 +442,14 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         {
             // Sort efficiently the hand cards for efficiency
             intersected_cards = 0;
-            for (size_t i = 0; i < 7; i++)
+            for (int i = 0; i < 7; i++)
             {
                 if (intersected_cards < num_given_cards){
                     if (i-intersected_cards >= n){
                         new_hand[i] = players_cards[l][intersected_cards];
                         intersected_cards++;
                         continue;
-                    }
-                    if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
+                    }else if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
                         new_hand[i] = players_cards[l][intersected_cards];
                         intersected_cards++;
                         continue;
@@ -459,6 +457,7 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
                 }
                 new_hand[i] = posible_cards[indexes[i-intersected_cards]];
             }
+
             result = get_best_hand(new_hand);
             players_hand_posibilities[l][result.hand_type]++;
             // Check if win or draw
@@ -482,12 +481,12 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         }else{
             for (int i = 0; i < drawed_players; i++)
             {
-                if (players_hand_posibilities[drawed_players_indx[i]]["Draw"] %1000 == 0){
-                    print_cards(new_hand,7);
-                    cout << result.hand_type << "\n";
-                    cout << player_hand_euristic << "\n";
-                    print5_cards(result.Cards,5);
-                }
+                // if (players_hand_posibilities[drawed_players_indx[i]]["Draw"] %1000 == 0){
+                //     print_cards(new_hand,7);
+                //     cout << result.hand_type << "\n";
+                //     cout << player_hand_euristic << "\n";
+                //     print5_cards(result.Cards,5);
+                // }
                 players_hand_posibilities[drawed_players_indx[i]]["Draw"]++;
             }
         }
@@ -514,7 +513,6 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         players_hand_posibilities[l]["Total Cases"] = num_posible_cases;
 
     }
-    //hand_posibilities["Total Cases"] = num_posible_cases;
     return players_hand_posibilities;
 }
 
@@ -531,4 +529,6 @@ PYBIND11_MODULE(PokerPy, m) {
         .def_readwrite("Cards", &Hand::Cards);
     m.def("get_best_hand", &get_best_hand, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frecuency", &calculate_hand_frecuency, "A function that gets the frecuencies of the possible hands given any number of cards");
-}
+    m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
+
+}   
