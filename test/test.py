@@ -20,3 +20,4 @@ class module_tests(unittest.TestCase):
         test_hand = PokerPy.Hand("Pairs",[PokerPy.Card('9H'),PokerPy.Card('9C'),PokerPy.Card('AC'),PokerPy.Card('10H'),PokerPy.Card('4C')])
         test_heuristic = 2677040
         self.assertEqual(test_heuristic,PokerPy.calculate_hand_heuristic(test_hand))
+

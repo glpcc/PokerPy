@@ -25,7 +25,6 @@ struct Hand{
     array<Card,5> Cards;
 };
 
-
 Hand get_best_hand(array<Card,7> cards){
     // WARNING This function assumes the cards are sorted before hand
     // Divide the cards by color
@@ -541,10 +540,10 @@ PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
         .def(py::init(&create_card))
-        .def_readwrite("value", &Card::value)
-        .def_readwrite("color", &Card::color)
-        .def("__repr__",[](Card a){return "Card: "+card_values[a.value-1]+colors[a.color];})
-        .def("__eq__",[](Card a,Card b){return a.value == b.value && a.color == b.color;});
+        .def_property("value", [](Card &a){return card_values[a.value-1];}, [](Card &a,string val){a.value = card_values_nums[val];})
+        .def_property("color", [](Card &a){return colors[a.color];}, [](Card &a,string col){a.color = colors_values[col];})
+        .def("__repr__",[](Card &a){return "Card: "+card_values[a.value-1]+colors[a.color];})
+        .def("__eq__",[](Card &a,Card &b){return a.value == b.value && a.color == b.color;});
     py::class_<Hand>(m, "Hand")
         .def(py::init<string,array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
