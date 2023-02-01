@@ -7,10 +7,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <stdint.h>
-
+#include <format>
 
 using namespace std;
 namespace py = pybind11;
+using namespace pybind11::literals;
 
 struct Card{
     // 1 to 13 (2 to A)
@@ -276,10 +277,15 @@ Hand get_best_hand(array<Card,7> cards){
     return result;
 }
 
-Card create_card(int color, int value){
+array<string,4> colors = {"♣","♦","♥","♠"};
+array<string,13> card_values = {"2","3","4","5","6","7","8","9","10","J","Q","K","A"};
+map<string,int> colors_values = {{"♣",0},{"♦",1},{"♥",2},{"♠",3},{"C",0},{"D",1},{"H",2},{"S",3}};
+map<string,int> card_values_nums = {{"2",1},{"3",2},{"4",3},{"5",4},{"6",5},{"7",6},{"8",7},{"9",8},{"10",9},{"J",10},{"Q",11},{"K",12},{"A",13}};
+
+Card create_card(string card){
     Card c;
-    c.color = color;
-    c.value = value;
+    c.color = colors_values[card.substr(card.size()-1,1)];
+    c.value = card_values_nums[card.substr(0,card.size()-1)];
     return c;
 }
 
@@ -369,7 +375,6 @@ int calculate_hand_heuristic(Hand player_hand){
     }
     return result;
 }
-
 
 vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
 
@@ -516,19 +521,57 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
     return players_hand_posibilities;
 }
 
+array<string,10> hands = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
+
+Hand get_best_hand_not_sorted(array<Card,7> cards){
+    sort(cards.begin(),cards.end(),[](Card &a,Card &b){return a.value > b.value;});
+    return get_best_hand(cards);
+}
+
+void nice_print_frecuencies(vector<map<string,int>> frecs){
+    // Print win/draw probabilities
+    for (int i = 0; i < frecs.size(); i++){
+        float win_chance = ((float) frecs[i]["Win"]/(float) frecs[i]["Total Cases"])*100;
+        float draw_chance = ((float) frecs[i]["Draw"]/(float) frecs[i]["Total Cases"])*100;
+        py::print(format("Player: {}, Win: {:.2f}%, Draw: {:.2f}%",i,win_chance,draw_chance),"sep"_a="");
+    }
+    py::print("\nHAND POSSIBILITIES\n");
+    // Print Table Headers 
+    py::print("\t\t","end"_a="");
+    for (int i = 0; i < frecs.size(); i++){
+        py::print(format("Player{}\t",i),"end"_a="");
+    }
+    py::print("");
+    // Print Each hand posibilities
+    for (int i = 0; i < 10; i++){
+        py::print(hands[i],"end"_a="");
+        if (hands[i].size() > 7){
+            py::print("\t","end"_a="");
+        }else{
+            py::print("\t\t","end"_a="");
+        }
+        for (int j = 0; j < frecs.size(); j++){
+            float hand_pos = ((float) frecs[j][hands[i]]/(float) frecs[j]["Total Cases"])*100;
+            py::print(format("{:.2f}%\t",hand_pos),"end"_a="");
+        }
+        py::print("");
+    }
+}
+
 PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
-        .def(py::init<int,int>())
+        .def(py::init(&create_card))
         .def_readwrite("value", &Card::value)
         .def_readwrite("color", &Card::color)
-        .def("__repr__",[](Card a){return "Card: "+to_string(a.value)+to_string(a.color);});
+        .def("__repr__",[](Card a){return "Card: "+card_values[a.value-1]+colors[a.color];})
+        .def("__eq__",[](Card a,Card b){return a.value == b.value && a.color == b.color;});
     py::class_<Hand>(m, "Hand")
         .def(py::init<string,array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
         .def_readwrite("Cards", &Hand::Cards);
-    m.def("get_best_hand", &get_best_hand, "A function that gets the best hands given 7 cards");
+    m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frecuency", &calculate_hand_frecuency, "A function that gets the frecuencies of the possible hands given any number of cards");
     m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
-
+    m.def("nice_print_frecuencies", &nice_print_frecuencies, "A function that gets the frecuencies of the possible hands and prints them in nice format");
 }   
