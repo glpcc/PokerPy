@@ -1,29 +1,5 @@
 import PokerPy
 import unittest
-import random
-
-
-def generate_random_hands(num_cards: int,num_players: int)-> list[list[PokerPy.Card]]:
-    posible_cards = set()
-    for i in range(4):
-        for j in range(1,14):
-            posible_cards.add(PokerPy.Card(j,i))
-    res = []
-    fold = []
-    if num_cards > 2:
-        for j in range(num_cards-2):
-            card = random.choice(list(posible_cards))
-            posible_cards.remove(card)
-            fold.append(card)
-    for i in range(num_players):
-        player_cards = []
-        for j in range(2):
-            card = random.choice(list(posible_cards))
-            posible_cards.remove(card)
-            player_cards.append(card)
-        player_cards += fold
-        res.append(player_cards)
-    return res
 
 
 class module_tests(unittest.TestCase):
@@ -44,4 +20,3 @@ class module_tests(unittest.TestCase):
         test_hand = PokerPy.Hand("Pairs",[PokerPy.Card('9H'),PokerPy.Card('9C'),PokerPy.Card('AC'),PokerPy.Card('10H'),PokerPy.Card('4C')])
         test_heuristic = 2677040
         self.assertEqual(test_heuristic,PokerPy.calculate_hand_heuristic(test_hand))
-

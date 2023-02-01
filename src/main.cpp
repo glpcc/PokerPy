@@ -7,7 +7,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <stdint.h>
-#include <format>
+#include <cmath>
 
 using namespace std;
 namespace py = pybind11;
@@ -25,22 +25,6 @@ struct Hand{
     array<Card,5> Cards;
 };
 
-void print_cards(array<Card,7> cards, int num_cards){
-    cout << "Cards:\n";
-    for(auto i=0; i<num_cards; i++)
-	{
-		cout<<cards[i].value << " " << cards[i].color << "\n";
-	}
-    cout << endl;
-}
-void print5_cards(array<Card,5> cards, int num_cards){
-    cout << "Cards:\n";
-    for(auto i=0; i<num_cards; i++)
-	{
-		cout<<cards[i].value << " " << cards[i].color << "\n";
-	}
-    cout << endl;
-}
 
 Hand get_best_hand(array<Card,7> cards){
     // WARNING This function assumes the cards are sorted before hand
@@ -472,11 +456,6 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
                 drawed_players = 1;
                 drawed_players_indx[0] = l;
             }else if (player_hand_euristic == max_hand_heuristic){
-  
-                // print_cards(new_hand,7);
-                // cout << result.hand_type << "\n";
-                // cout << player_hand_euristic << "\n";
-                // print5_cards(result.Cards,5);
                 drawed_players_indx[drawed_players] = l;
                 drawed_players++;
             }
@@ -486,12 +465,6 @@ vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
         }else{
             for (int i = 0; i < drawed_players; i++)
             {
-                // if (players_hand_posibilities[drawed_players_indx[i]]["Draw"] %1000 == 0){
-                //     print_cards(new_hand,7);
-                //     cout << result.hand_type << "\n";
-                //     cout << player_hand_euristic << "\n";
-                //     print5_cards(result.Cards,5);
-                // }
                 players_hand_posibilities[drawed_players_indx[i]]["Draw"]++;
             }
         }
@@ -528,18 +501,24 @@ Hand get_best_hand_not_sorted(array<Card,7> cards){
     return get_best_hand(cards);
 }
 
+string round_float(float a,int num_decimals){
+    int temp = round(a*pow(10,num_decimals));
+    string total_number = to_string((float) temp/(pow(10,num_decimals)));
+    return total_number.substr(0,total_number.find(".")+2);
+}
+
 void nice_print_frecuencies(vector<map<string,int>> frecs){
     // Print win/draw probabilities
     for (int i = 0; i < frecs.size(); i++){
         float win_chance = ((float) frecs[i]["Win"]/(float) frecs[i]["Total Cases"])*100;
         float draw_chance = ((float) frecs[i]["Draw"]/(float) frecs[i]["Total Cases"])*100;
-        py::print(format("Player: {}, Win: {:.2f}%, Draw: {:.2f}%",i,win_chance,draw_chance),"sep"_a="");
+        py::print("Player: ",i,", Win: ",round_float(win_chance,2),"%, Draw: ",round_float(draw_chance,2),"%","sep"_a="");
     }
     py::print("\nHAND POSSIBILITIES\n");
     // Print Table Headers 
     py::print("\t\t","end"_a="");
     for (int i = 0; i < frecs.size(); i++){
-        py::print(format("Player{}\t",i),"end"_a="");
+        py::print("Player",i,"\t","end"_a="","sep"_a="");
     }
     py::print("");
     // Print Each hand posibilities
@@ -550,9 +529,9 @@ void nice_print_frecuencies(vector<map<string,int>> frecs){
         }else{
             py::print("\t\t","end"_a="");
         }
-        for (int j = 0; j < frecs.size(); j++){
-            float hand_pos = ((float) frecs[j][hands[i]]/(float) frecs[j]["Total Cases"])*100;
-            py::print(format("{:.2f}%\t",hand_pos),"end"_a="");
+        for (size_t j = 0; j < frecs.size(); j++){
+            float hand_pos = ((float) frecs[j][hands[i]]/(float) frecs[j]["Total Cases"])*100;;
+            py::print(round_float(hand_pos,2),"%\t","end"_a="","sep"_a="");
         }
         py::print("");
     }
