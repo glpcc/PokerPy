@@ -4,9 +4,11 @@ A python module writen in C++ for caculating Texas Hold'em poker odds in under a
 
 # Installation
 To install this module use the following command.
+
 ```bash 
 pip install git+https://github.com/glpcc/PokerPy
 ```
+
 # Documentation
 
 ## Card Class
@@ -92,3 +94,7 @@ This is used internally in the *calculate_hand_frecuency* function to calculate 
 
 # Limitations 
 Supports up to 10 players, and might run slower than a second in old hardware.
+
+# Contributing
+
+Any performance increase or bugfix will be gladly welcomed.
