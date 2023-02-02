@@ -27,7 +27,7 @@ setup(
         'pybind11'
     ],
     package_data={
-        "PokerPy":["types.pyi","__init__.pyi"],
+        "PokerPy":["py.typed","__init__.pyi"],
     },
     packages=["PokerPy"],
     # Currently, build_ext only provides an optional "highest supported C++
