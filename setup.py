@@ -26,10 +26,10 @@ setup(
     install_requires=[
         'pybind11'
     ],
-    # packages=["poker_probs", "unohelper"],
     package_data={
         "PokerPy":["types.pyi","__init__.pyi"],
     },
+    packages=["PokerPy"],
     # Currently, build_ext only provides an optional "highest supported C++
     # level" feature, but in the future it may provide more features.
     # cmdclass={"build_ext": build_ext},
