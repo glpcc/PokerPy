@@ -1,6 +1,6 @@
 import PokerPy
 import unittest
-
+from time import perf_counter
 
 class module_tests(unittest.TestCase):
     def test_calculate_frec(self):

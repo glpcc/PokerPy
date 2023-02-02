@@ -206,7 +206,7 @@ Hand get_best_hand(array<Card,7> cards){
         return result;
     }
     // Check flushes
-    for (size_t i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         if (num_color_cards[i] >= 5){
             result.hand_type = "Flush";
@@ -528,7 +528,7 @@ void nice_print_frecuencies(vector<map<string,int>> frecs){
         }else{
             py::print("\t\t","end"_a="");
         }
-        for (size_t j = 0; j < frecs.size(); j++){
+        for (int j = 0; j < frecs.size(); j++){
             float hand_pos = ((float) frecs[j][hands[i]]/(float) frecs[j]["Total Cases"])*100;;
             py::print(round_float(hand_pos,2),"%\t","end"_a="","sep"_a="");
         }
