@@ -3,7 +3,10 @@
 A python module writen in C++ for caculating Texas Hold'em poker odds in under a second. The union between python and C++ is done with [pybind11](https://github.com/pybind/pybind11) 
 
 # Installation
-
+To install this module use the following command.
+```bash 
+pip install git+https://github.com/glpcc/PokerPy
+```
 # Documentation
 
 ## Card Class

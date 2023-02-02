@@ -28,7 +28,7 @@ setup(
     ],
     # packages=["poker_probs", "unohelper"],
     package_data={
-        "PokerPy":["py.typed","__init__.pyi"],
+        "PokerPy":["types.pyi","__init__.pyi"],
     },
     # Currently, build_ext only provides an optional "highest supported C++
     # level" feature, but in the future it may provide more features.
