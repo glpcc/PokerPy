@@ -62,17 +62,17 @@ def get_best_hand(cards: list[Card]) -> Hand: ...
 ```
 It gets a list of 7 cards and returns the best possible Hand as a hand_type.
 
-Internally it sorts the cards and perform different checks for different types of hands on a single for loop for performance. It is internally used in the *calculate_hand_frecuencies*.
+Internally it sorts the cards and perform different checks for different types of hands on a single for loop for performance. It is internally used in the *calculate_hand_frequencies*.
 
 ### Warning 
 At the time it isn't checked if the correct number of cards is supplied or if there is any repeated cards. Any thing outside 7 valid,non repeated cards is undefined behaviour.
 
-### calculate_hand_frecuency
+### calculate_hand_frequency
 ```python
-def calculate_hand_frecuency(cards: list[list[Card]]) -> list[dict[str,int]]: ...
+def calculate_hand_frequency(cards: list[list[Card]]) -> list[dict[str,int]]: ...
 ```
-Function that gets a list of players cards, and returns a list with all the hands frecuencies for each player, taking into account the other players hands.
-It also calculates the win and draw frecuency of each player, this is shown as the keys "Win" and "Draw" in each players dictionaries.
+Function that gets a list of players cards, and returns a list with all the hands frequencies for each player, taking into account the other players hands.
+It also calculates the win and draw frequency of each player, this is shown as the keys "Win" and "Draw" in each players dictionaries.
 
 It is done by iterating for all the possibe combinations of cards and calculating the best hand.
 
@@ -80,11 +80,11 @@ It is done by iterating for all the possibe combinations of cards and calculatin
 The number of cards per player supplied must be between 2 and 6.And all players should have the same cards. However different players can repeat cards, for example the fold should be shared upon all players.
 Anything outside these bounds is UNDEFINED BEHAVIOUR.
 
-### nice_print_frecuencies
+### nice_print_frequencies
 ```python
-def nice_print_frecuencies(frecs: list[dict[str,int]]) -> None: ...
+def nice_print_frequencies(frecs: list[dict[str,int]]) -> None: ...
 ```
-Function that gets a the frecuencies of the *calculate_hand_frecuency* function and prints them in a nice table format.
+Function that gets a the frequencies of the *calculate_hand_frequency* function and prints them in a nice table format.
 
 ### calculate_hand_heuristic
 ```python
@@ -92,7 +92,7 @@ def calculate_hand_heuristic(hand: Hand) -> int: ...
 ```
 Function that gets a hand and uses bitshifting to calculate a hand value efficienly. It ensures that if a hand is better than another in texas hold'em, this function returns a larger int for the better hand.
 
-This is used internally in the *calculate_hand_frecuency* function to calculate the win,draw chance of every possible combination of cards.
+This is used internally in the *calculate_hand_frequency* function to calculate the win,draw chance of every possible combination of cards.
 
 # Limitations 
 Supports up to 10 players, and might run slower than a second in old hardware.

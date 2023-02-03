@@ -359,7 +359,7 @@ int calculate_hand_heuristic(Hand player_hand){
     return result;
 }
 
-vector<map<string,int>> calculate_hand_frecuency(vector<vector<Card>> cards){
+vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
 
     int num_given_cards = cards[0].size();
     vector<array<Card,7>> players_cards;
@@ -506,7 +506,7 @@ string round_float(float a,int num_decimals){
     return total_number.substr(0,total_number.find(".")+2);
 }
 
-void nice_print_frecuencies(vector<map<string,int>> frecs){
+void nice_print_frequencies(vector<map<string,int>> frecs){
     // Print win/draw probabilities
     for (int i = 0; i < frecs.size(); i++){
         float win_chance = ((float) frecs[i]["Win"]/(float) frecs[i]["Total Cases"])*100;
@@ -549,7 +549,7 @@ PYBIND11_MODULE(PokerPy, m) {
         .def_readwrite("hand_type", &Hand::hand_type)
         .def_readwrite("Cards", &Hand::Cards);
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
-    m.def("calculate_hand_frecuency", &calculate_hand_frecuency, "A function that gets the frecuencies of the possible hands given any number of cards");
+    m.def("calculate_hand_frequency", &calculate_hand_frequency, "A function that gets the frequencies of the possible hands given any number of cards");
     m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
-    m.def("nice_print_frecuencies", &nice_print_frecuencies, "A function that gets the frecuencies of the possible hands and prints them in nice format");
+    m.def("nice_print_frequencies", &nice_print_frequencies, "A function that gets the frequencies of the possible hands and prints them in nice format");
 }   
