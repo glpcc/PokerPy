@@ -3,3 +3,6 @@ build/
 *.exe/
 .vscode/
 test/__pycache__
+.devcontainer
+*.so
+*.out
