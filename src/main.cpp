@@ -476,6 +476,13 @@ string round_float(float a,int num_decimals){
     return total_number.substr(0,total_number.find(".")+2);
 }
 
+Card card_from_string(string card){
+    Card c;
+    c.suit = suit_values[card.substr(card.size()-1,1)];
+    c.value = card_values_nums[card.substr(0,card.size()-1)];
+    return c;
+}
+
 void nice_print_frequencies(vector<map<string,int>> frecs){
     // Print win/draw probabilities
     for (int i = 0; i < frecs.size(); i++){
@@ -519,6 +526,7 @@ PYBIND11_MODULE(PokerPy, m) {
         .def(py::init<string, array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
         .def_readwrite("Cards", &Hand::Cards);
+    m.def("card_from_string", &card_from_string, "A function that converts a string to a Card");
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frequency", &calculate_hand_frequency, "A function that gets the frequencies of the possible hands given any number of cards");
     m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
