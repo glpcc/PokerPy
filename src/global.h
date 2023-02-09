@@ -95,81 +95,10 @@ struct Hand{
     int hand_heuristic() const {
         // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
         int64_t result = this->hand_type;
-        switch (this->hand_type)
+        for (auto card: this->Cards)
         {
-            case RoyalFlush:
-                result = result << 5*4;
-                break;
-            case StraightFlush:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4*4;
-                break;
-            case Poker:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4;
-                result += this->Cards[4].value;
-                result = result << 3*4;
-                break;
-            case FullHouse:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4;
-                result += this->Cards[3].value;
-                result = result << 3*4;
-                break;
-            case Flush:
-                result = result << 4;
-                for (int i = 0; i < 4; i++)
-                {
-                    result += this->Cards[i].value;
-                    result = result << 4;
-                }
-                result += this->Cards[4].value;
-                break;
-            case Straight:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4*4;
-                break;
-            case Triples:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4;
-                result += this->Cards[3].value;
-                result = result << 4;
-                result += this->Cards[4].value;
-                result = result << 4*2;
-                break;
-            case DoublePairs:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4;
-                result += this->Cards[2].value;
-                result = result << 4;
-                result += this->Cards[4].value;
-                result = result << 4*2;
-                break;
-            case Pairs:
-                result = result << 4;
-                result += this->Cards[0].value;
-                result = result << 4;
-                for (int i = 0; i < 3; i++)
-                {
-                    result += this->Cards[i+2].value;
-                    result = result << 4;
-                }
-                break;
-            case HighCard:
-                result = result << 4;
-                for (int i = 0; i < 4; i++)
-                {
-                    result += this->Cards[i].value;
-                    result = result << 4;
-                }
-                result += this->Cards[4].value;
-                break;
+            result = result << 4;
+            result += card.value;
         }
         return result;
     }
