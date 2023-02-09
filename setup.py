@@ -4,7 +4,7 @@ from pybind11 import get_cmake_dir
 from pybind11.setup_helpers import Pybind11Extension, build_ext,ParallelCompile
 from setuptools import setup
 
-__version__ = "1.0.0"
+__version__ = "1.0.1.dev0"
 
 
 ext_modules = [

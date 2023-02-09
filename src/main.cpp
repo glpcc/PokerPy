@@ -8,30 +8,19 @@
 #include <pybind11/stl.h>
 #include <stdint.h>
 #include <cmath>
+#include "global.h"
 
 using namespace std;
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-struct Card{
-    // 1 to 13 (2 to A)
-    int value;
-    // 0 to 3 (H to D)
-    int color;
-};
-
-struct Hand{
-    string hand_type;
-    array<Card,5> Cards;
-};
-
 Hand get_best_hand(array<Card,7> cards){
     // WARNING This function assumes the cards are sorted before hand
-    // Divide the cards by color
+    // Divide the cards by suit
     array<array<Card,7>,4> color_cards;
     array<int,4> num_color_cards = {0,0,0,0};
-    color_cards[cards[0].color][0] = cards[0];
-    num_color_cards[cards[0].color]++;
+    color_cards[cards[0].suit - 1][0] = cards[0];
+    num_color_cards[cards[0].suit - 1]++;
     // To get the straights
     array<Card,5> current_straight;
     current_straight[0] = cards[0];
@@ -40,9 +29,9 @@ Hand get_best_hand(array<Card,7> cards){
     bool found_straight = false;
     // To get straight flushes
     array<array<Card,5>,4> straight_flushes;
-    straight_flushes[cards[0].color][0] = cards[0];
+    straight_flushes[cards[0].suit - 1][0] = cards[0];
     array<int,4> straight_flushes_sizes = {0,0,0,0};
-    straight_flushes_sizes[cards[0].color] += 1;
+    straight_flushes_sizes[cards[0].suit - 1] += 1;
     array<Card,5> straight_flush;
     bool found_straight_flush = false;
     // To get rest of groupings
@@ -107,26 +96,26 @@ Hand get_best_hand(array<Card,7> cards){
             }
         }
         // Search for flushes
-        color_cards[cards[i].color][num_color_cards[cards[i].color]] = cards[i];
-        num_color_cards[cards[i].color]++;
+        color_cards[cards[i].suit - 1][num_color_cards[cards[i].suit - 1]] = cards[i];
+        num_color_cards[cards[i].suit - 1]++;
         // Search for straight flushes
-        if (straight_flushes_sizes[cards[i].color] != 0){
-            if (straight_flushes[cards[i].color][straight_flushes_sizes[cards[i].color]-1].value - cards[i].value == 1){
-                straight_flushes[cards[i].color][straight_flushes_sizes[cards[i].color]] = cards[i];
-                straight_flushes_sizes[cards[i].color]++;
-                if (straight_flushes_sizes[cards[i].color] == 5){
-                    straight_flush = straight_flushes[cards[i].color];
-                    //copy(straight_flushes[cards[i].color],straight_flushes[cards[i].color]+5,straight_flush);
+        if (straight_flushes_sizes[cards[i].suit - 1] != 0){
+            if (straight_flushes[cards[i].suit - 1][straight_flushes_sizes[cards[i].suit - 1]-1].value - cards[i].value == 1){
+                straight_flushes[cards[i].suit - 1][straight_flushes_sizes[cards[i].suit - 1]] = cards[i];
+                straight_flushes_sizes[cards[i].suit - 1]++;
+                if (straight_flushes_sizes[cards[i].suit - 1] == 5){
+                    straight_flush = straight_flushes[cards[i].suit - 1];
+                    //copy(straight_flushes[cards[i].suit - 1],straight_flushes[cards[i].suit - 1]+5,straight_flush);
                     found_straight_flush = true;
-                    straight_flushes_sizes[cards[i].color] = 0;
+                    straight_flushes_sizes[cards[i].suit - 1] = 0;
                 }
             }else{
-                straight_flushes_sizes[cards[i].color] = 1;
-                straight_flushes[cards[i].color][0] = cards[i];
+                straight_flushes_sizes[cards[i].suit - 1] = 1;
+                straight_flushes[cards[i].suit - 1][0] = cards[i];
             }
         }else{
-            straight_flushes[cards[i].color][0] = cards[i];
-            straight_flushes_sizes[cards[i].color]++;
+            straight_flushes[cards[i].suit - 1][0] = cards[i];
+            straight_flushes_sizes[cards[i].suit - 1]++;
         }
 		last_card = cards[i];
 	}
@@ -153,13 +142,13 @@ Hand get_best_hand(array<Card,7> cards){
     }
     // Check for straight flushes
     if (!found_straight_flush){
-        // Iterate through the cards to see if ACES of some color makes a straight flush
+        // Iterate through the cards to see if ACES of some suit makes a straight flush
         for(int i=0; i<7; i++)
         {
             if (cards[i].value != 13){
                 break;
-            }else if (straight_flushes_sizes[cards[i].color] == 4 && straight_flushes[cards[i].color][0].value == 4){
-                copy(straight_flushes[cards[i].color].begin(),straight_flushes[cards[i].color].begin()+4,straight_flush.begin());
+            }else if (straight_flushes_sizes[cards[i].suit - 1] == 4 && straight_flushes[cards[i].suit - 1][0].value == 4){
+                copy(straight_flushes[cards[i].suit - 1].begin(),straight_flushes[cards[i].suit - 1].begin()+4,straight_flush.begin());
                 straight_flush[4] = cards[i];
                 found_straight_flush = true;
                 break;
@@ -260,21 +249,12 @@ Hand get_best_hand(array<Card,7> cards){
     return result;
 }
 
-array<string,4> colors = {"♣","♦","♥","♠"};
-array<string,13> card_values = {"2","3","4","5","6","7","8","9","10","J","Q","K","A"};
-map<string,int> colors_values = {{"♣",0},{"♦",1},{"♥",2},{"♠",3},{"C",0},{"D",1},{"H",2},{"S",3}};
-map<string,int> card_values_nums = {{"2",1},{"3",2},{"4",3},{"5",4},{"6",5},{"7",6},{"8",7},{"9",8},{"10",9},{"J",10},{"Q",11},{"K",12},{"A",13}};
-
 Card create_card(string card){
     Card c;
-    c.color = colors_values[card.substr(card.size()-1,1)];
+    c.suit = suit_values[card.substr(card.size()-1,1)];
     c.value = card_values_nums[card.substr(0,card.size()-1)];
     return c;
 }
-
-map<string,int> hand_value = {
-    {"Royal Flush",10},{"Straight Flush",9},{"Poker",8},{"Full House",7},{"Flush",6},{"Straight",5},{"Triples",4},{"Double Pairs",3},{"Pairs",2},{"High Card",1}
-};
 
 int calculate_hand_heuristic(Hand player_hand){
     // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
@@ -393,7 +373,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
     vector<Card> posible_cards;
     for (int j = 13; j > 0; j--)
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 4; i > 0; i--)
         {
             Card new_card;
             bool alredy_in_hand = false;
@@ -401,7 +381,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             {
                 for (int k = 0; k < num_given_cards; k++)
                 {
-                    if (players_cards[l][k].value == j && players_cards[l][k].color == i){
+                    if (players_cards[l][k].value == j && players_cards[l][k].suit == i){
                         alredy_in_hand = true;
                         break;
                     }
@@ -409,7 +389,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             }
             if (!alredy_in_hand){
                 new_card.value = j;
-                new_card.color = i;
+                new_card.suit = (Suit)i;
                 posible_cards.push_back(new_card);
             }
         }
@@ -493,8 +473,6 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
     return players_hand_posibilities;
 }
 
-array<string,10> hands = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
-
 Hand get_best_hand_not_sorted(array<Card,7> cards){
     sort(cards.begin(),cards.end(),[](Card &a,Card &b){return a.value > b.value;});
     return get_best_hand(cards);
@@ -540,10 +518,10 @@ PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
         .def(py::init(&create_card))
-        .def_property("value", [](Card &a){return card_values[a.value-1];}, [](Card &a,string val){a.value = card_values_nums[val];})
-        .def_property("color", [](Card &a){return colors[a.color];}, [](Card &a,string col){a.color = colors_values[col];})
-        .def("__repr__",[](Card &a){return "Card: "+card_values[a.value-1]+colors[a.color];})
-        .def("__eq__",[](Card &a,Card &b){return a.value == b.value && a.color == b.color;});
+        .def_readwrite("value", &Card::value)
+        .def_readwrite("suit", &Card::suit)
+        .def("__repr__", [](Card &a){return "Card: "+card_values[a.value-1]+colors[a.suit - 1];})
+        .def("__eq__", [](Card &a,Card &b){return a.value == b.value && a.suit == b.suit;});
     py::class_<Hand>(m, "Hand")
         .def(py::init<string,array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
