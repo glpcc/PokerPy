@@ -7,7 +7,7 @@
 
 using namespace std;
 
-enum Suit {Hearts = 1, Diamonds, Clubs, Spades};
+enum Suit {Hearts = 1, Diamonds, Clubs, Spades = 4};
 enum HandType {
     HighCard = 1,
     Pairs,
@@ -18,7 +18,7 @@ enum HandType {
     FullHouse,
     Poker,
     StraightFlush,
-    RoyalFlush
+    RoyalFlush = 10
 };
 array<string, 4> colors = {"♥", "♦", "♣", "♠"};
 array<string, 13> card_values = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
@@ -79,6 +79,88 @@ struct Hand{
         hand_type((HandType) hand_type),
         Cards(cards)
     {}
+
+    int hand_heuristic(){
+        // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
+        int64_t result = this->hand_type;
+        switch (this->hand_type)
+        {
+            case RoyalFlush:
+                result = result << 5*4;
+                break;
+            case StraightFlush:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4*4;
+                break;
+            case Poker:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4;
+                result += this->Cards[4].value;
+                result = result << 3*4;
+                break;
+            case FullHouse:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4;
+                result += this->Cards[3].value;
+                result = result << 3*4;
+                break;
+            case Flush:
+                result = result << 4;
+                for (int i = 0; i < 4; i++)
+                {
+                    result += this->Cards[i].value;
+                    result = result << 4;
+                }
+                result += this->Cards[4].value;
+                break;
+            case Straight:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4*4;
+                break;
+            case Triples:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4;
+                result += this->Cards[3].value;
+                result = result << 4;
+                result += this->Cards[4].value;
+                result = result << 4*2;
+                break;
+            case DoublePairs:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4;
+                result += this->Cards[2].value;
+                result = result << 4;
+                result += this->Cards[4].value;
+                result = result << 4*2;
+                break;
+            case Pairs:
+                result = result << 4;
+                result += this->Cards[0].value;
+                result = result << 4;
+                for (int i = 0; i < 3; i++)
+                {
+                    result += this->Cards[i+2].value;
+                    result = result << 4;
+                }
+                break;
+            case HighCard:
+                result = result << 4;
+                for (int i = 0; i < 4; i++)
+                {
+                    result += this->Cards[i].value;
+                    result = result << 4;
+                }
+                result += this->Cards[4].value;
+                break;
+        }
+        return result;
+    }
 };
 
 #endif

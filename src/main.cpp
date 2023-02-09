@@ -249,88 +249,6 @@ Hand get_best_hand(array<Card,7> cards){
     return result;
 }
 
-int calculate_hand_heuristic(Hand player_hand){
-    // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
-    int64_t result = player_hand.hand_type;
-    switch (result)
-    {
-        case 10:
-            result = result << 5*4;
-            break;
-        case 9:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4*4;
-            break;
-        case 8:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4;
-            result += player_hand.Cards[4].value;
-            result = result << 3*4;
-            break;
-        case 7:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4;
-            result += player_hand.Cards[3].value;
-            result = result << 3*4;
-            break;
-        case 6:
-            result = result << 4;
-            for (int i = 0; i < 4; i++)
-            {
-                result += player_hand.Cards[i].value;
-                result = result << 4;
-            }
-            result += player_hand.Cards[4].value;
-            break;
-        case 5:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4*4;
-            break;
-        case 4:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4;
-            result += player_hand.Cards[3].value;
-            result = result << 4;
-            result += player_hand.Cards[4].value;
-            result = result << 4*2;
-            break;
-        case 3:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4;
-            result += player_hand.Cards[2].value;
-            result = result << 4;
-            result += player_hand.Cards[4].value;
-            result = result << 4*2;
-            break;
-        case 2:
-            result = result << 4;
-            result += player_hand.Cards[0].value;
-            result = result << 4;
-            for (int i = 0; i < 3; i++)
-            {
-                result += player_hand.Cards[i+2].value;
-                result = result << 4;
-            }
-            break;
-        case 1:
-            result = result << 4;
-            for (int i = 0; i < 4; i++)
-            {
-                result += player_hand.Cards[i].value;
-                result = result << 4;
-            }
-            result += player_hand.Cards[4].value;
-            break;
-    }
-    return result;
-}
-
 vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
 
     int num_given_cards = cards[0].size();
@@ -421,7 +339,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             result = get_best_hand(new_hand);
             players_hand_posibilities[l][hand_names[result.hand_type - 1]]++;
             // Check if win or draw
-            player_hand_euristic = calculate_hand_heuristic(result);
+            player_hand_euristic = result.hand_heuristic();
             if (player_hand_euristic > max_hand_heuristic){
                 max_hand_heuristic = player_hand_euristic;
                 drawed_players = 1;
@@ -525,10 +443,10 @@ PYBIND11_MODULE(PokerPy, m) {
     py::class_<Hand>(m, "Hand")
         .def(py::init<short, array<Card,5>>())
         .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
-        .def_readwrite("Cards", &Hand::Cards);
+        .def_readwrite("Cards", &Hand::Cards)
+        .def("hand_heuristic", &Hand::hand_heuristic);
     m.def("card_from_string", &card_from_string, "A function that converts a string to a Card");
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frequency", &calculate_hand_frequency, "A function that gets the frequencies of the possible hands given any number of cards");
-    m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
     m.def("nice_print_frequencies", &nice_print_frequencies, "A function that gets the frequencies of the possible hands and prints them in nice format");
 }

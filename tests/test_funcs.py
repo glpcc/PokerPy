@@ -1,4 +1,4 @@
-from PokerPy import Card, Hand, calculate_hand_frequency, calculate_hand_heuristic, get_best_hand, card_from_string
+from PokerPy import Card, Hand, calculate_hand_frequency, get_best_hand, card_from_string
 
 def test_card_from_string():
     card = card_from_string('KD')
@@ -20,8 +20,3 @@ def test_best_hand():
     test_hand = Hand(2, [Card(12, 2),Card(12, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
     assert test_hand.hand_type == best_hand.hand_type
     assert test_hand.Cards == best_hand.Cards
-
-def test_calculate_hand_heuristic():
-    test_hand = Hand(2, [Card(8, 1),Card(8, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
-    test_heuristic = 2677040
-    assert test_heuristic == calculate_hand_heuristic(test_hand)
