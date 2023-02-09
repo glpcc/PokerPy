@@ -160,9 +160,9 @@ Hand get_best_hand(array<Card,7> cards){
     Hand result;
     if (found_straight_flush){
         if (straight_flush[0].value == 13){
-            result.hand_type = "Royal Flush";
+            result.hand_type = RoyalFlush;
         }else{
-            result.hand_type = "Straight Flush";
+            result.hand_type = StraightFlush;
         }
         result.Cards = straight_flush;
         // copy(straight_flush,straight_flush+5,result.Cards);
@@ -170,7 +170,7 @@ Hand get_best_hand(array<Card,7> cards){
     }
 
     if (found_poker){
-        result.hand_type = "Poker";
+        result.hand_type = Poker;
         copy(pokers.begin(),pokers.end(),result.Cards.begin());
         for(int i=0; i<7; i++){
             if (cards[i].value != pokers[0].value){
@@ -182,13 +182,13 @@ Hand get_best_hand(array<Card,7> cards){
     }
     
     if (num_triples > 0 && num_pairs > 0){
-        result.hand_type = "Full House";
+        result.hand_type = FullHouse;
         copy(triples[0].begin(),triples[0].end(),result.Cards.begin());
         result.Cards[3] = pairs[0][0];
         result.Cards[4] = pairs[0][1];
         return result;
     }else if(num_triples == 2){
-        result.hand_type = "Full House";
+        result.hand_type = FullHouse;
         copy(triples[0].begin(),triples[0].end(),result.Cards.begin());
         result.Cards[3] = triples[1][0];
         result.Cards[4] = triples[1][1];
@@ -198,7 +198,7 @@ Hand get_best_hand(array<Card,7> cards){
     for (int i = 0; i < 4; i++)
     {
         if (num_color_cards[i] >= 5){
-            result.hand_type = "Flush";
+            result.hand_type = Flush;
             copy(color_cards[i].begin(),color_cards[i].begin()+5,result.Cards.begin());
             return result;
         }
@@ -212,13 +212,13 @@ Hand get_best_hand(array<Card,7> cards){
     }
     
     if (found_straight){
-        result.hand_type = "Straight";
+        result.hand_type = Straight;
         result.Cards = straight;
         return result;
     }
 
     if (num_triples == 1){
-        result.hand_type = "Triples";
+        result.hand_type = Triples;
         copy(triples[0].begin(),triples[0].begin()+3,result.Cards.begin());
         result.Cards[3] = individuals[0];
         result.Cards[4] = individuals[1];
@@ -226,7 +226,7 @@ Hand get_best_hand(array<Card,7> cards){
     }
 
     if (num_pairs >= 2){
-        result.hand_type = "Double Pairs";
+        result.hand_type = DoublePairs;
         result.Cards[0] = pairs[0][0];
         result.Cards[1] = pairs[0][1];
         result.Cards[2] = pairs[1][0];
@@ -236,7 +236,7 @@ Hand get_best_hand(array<Card,7> cards){
     }
 
     if (num_pairs == 1){
-        result.hand_type = "Pairs";
+        result.hand_type = Pairs;
         result.Cards[0] = pairs[0][0];
         result.Cards[1] = pairs[0][1];
         result.Cards[2] = individuals[0];
@@ -244,14 +244,14 @@ Hand get_best_hand(array<Card,7> cards){
         result.Cards[4] = individuals[2];
         return result;
     }
-    result.hand_type = "High Card";
+    result.hand_type = HighCard;
     copy(individuals.begin(),individuals.begin()+5,result.Cards.begin());
     return result;
 }
 
 int calculate_hand_heuristic(Hand player_hand){
     // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
-    int64_t result = hand_value[player_hand.hand_type];
+    int64_t result = player_hand.hand_type;
     switch (result)
     {
         case 10:
@@ -419,7 +419,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             }
 
             result = get_best_hand(new_hand);
-            players_hand_posibilities[l][result.hand_type]++;
+            players_hand_posibilities[l][hand_names[result.hand_type - 1]]++;
             // Check if win or draw
             player_hand_euristic = calculate_hand_heuristic(result);
             if (player_hand_euristic > max_hand_heuristic){
@@ -499,14 +499,14 @@ void nice_print_frequencies(vector<map<string,int>> frecs){
     py::print("");
     // Print Each hand posibilities
     for (int i = 0; i < 10; i++){
-        py::print(hands[i],"end"_a="");
-        if (hands[i].size() > 7){
+        py::print(hand_names[i],"end"_a="");
+        if (hand_names[i].size() > 7){
             py::print("\t","end"_a="");
         }else{
             py::print("\t\t","end"_a="");
         }
         for (int j = 0; j < frecs.size(); j++){
-            float hand_pos = ((float) frecs[j][hands[i]]/(float) frecs[j]["Total Cases"])*100;;
+            float hand_pos = ((float) frecs[j][hand_names[i]]/(float) frecs[j]["Total Cases"])*100;;
             py::print(round_float(hand_pos,2),"%\t","end"_a="","sep"_a="");
         }
         py::print("");
@@ -523,8 +523,8 @@ PYBIND11_MODULE(PokerPy, m) {
         .def("__eq__", &Card::operator==)
         .def("__ge__", &Card::operator>=);
     py::class_<Hand>(m, "Hand")
-        .def(py::init<string, array<Card,5>>())
-        .def_readwrite("hand_type", &Hand::hand_type)
+        .def(py::init<short, array<Card,5>>())
+        .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
         .def_readwrite("Cards", &Hand::Cards);
     m.def("card_from_string", &card_from_string, "A function that converts a string to a Card");
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");

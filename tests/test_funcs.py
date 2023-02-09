@@ -17,11 +17,11 @@ def test_calculate_frec():
 def test_best_hand():
     test_cards = [Card(12, 2),Card(9, 1),Card(12, 3),Card(13, 3),Card(3, 3),Card(2, 2),Card(1, 2)]
     best_hand = get_best_hand(test_cards)
-    test_hand = Hand("Pairs",[Card(12, 2),Card(12, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
+    test_hand = Hand(2, [Card(12, 2),Card(12, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
     assert test_hand.hand_type == best_hand.hand_type
     assert test_hand.Cards == best_hand.Cards
 
 def test_calculate_hand_heuristic():
-    test_hand = Hand("Pairs",[Card(8, 1),Card(8, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
+    test_hand = Hand(2, [Card(8, 1),Card(8, 3),Card(13, 3),Card(9, 1),Card(3, 3)])
     test_heuristic = 2677040
     assert test_heuristic == calculate_hand_heuristic(test_hand)
