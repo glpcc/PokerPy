@@ -53,11 +53,11 @@ struct Card{
         suit((Suit) suit)
     {}
 
-    bool operator==(Card& rhs){
+    bool operator==(const Card& rhs) const {
         return (this->value == rhs.value) && (this->suit == rhs.suit);
     }
 
-    bool operator>=(Card& rhs){
+    bool operator>=(const Card& rhs) const {
         if(this->value >= rhs.value){
             return true;
         } else {
@@ -80,7 +80,7 @@ struct Hand{
         Cards(cards)
     {}
 
-    int hand_heuristic(){
+    int hand_heuristic() const {
         // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
         int64_t result = this->hand_type;
         switch (this->hand_type)
@@ -160,6 +160,14 @@ struct Hand{
                 break;
         }
         return result;
+    }
+
+    bool operator==(const Hand& rhs) const {
+        return (this->hand_type == rhs.hand_type) && (this->Cards == rhs.Cards);
+    }
+
+    bool operator>=(const Hand& rhs) const {
+        return this->hand_heuristic() >= rhs.hand_heuristic();
     }
 };
 
