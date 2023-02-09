@@ -258,83 +258,82 @@ Card create_card(string card){
 
 int calculate_hand_heuristic(Hand player_hand){
     // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
-    int64_t result = 0;
-    result += hand_value[player_hand.hand_type];
+    int64_t result = hand_value[player_hand.hand_type];
     switch (result)
     {
-    case 10:
-        result = result << 5*4;
-        break;
-    case 9:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4*4;
-        break;
-    case 8:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4;
-        result += player_hand.Cards[4].value;
-        result = result << 3*4;
-        break;
-    case 7:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4;
-        result += player_hand.Cards[3].value;
-        result = result << 3*4;
-        break;
-    case 6:
-        result = result << 4;
-        for (int i = 0; i < 4; i++)
-        {
-            result += player_hand.Cards[i].value;
+        case 10:
+            result = result << 5*4;
+            break;
+        case 9:
             result = result << 4;
-        }
-        result += player_hand.Cards[4].value;
-        break;
-    case 5:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4*4;
-        break;
-    case 4:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4;
-        result += player_hand.Cards[3].value;
-        result = result << 4;
-        result += player_hand.Cards[4].value;
-        result = result << 4*2;
-        break;
-    case 3:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4;
-        result += player_hand.Cards[2].value;
-        result = result << 4;
-        result += player_hand.Cards[4].value;
-        result = result << 4*2;
-        break;
-    case 2:
-        result = result << 4;
-        result += player_hand.Cards[0].value;
-        result = result << 4;
-        for (int i = 0; i < 3; i++)
-        {
-            result += player_hand.Cards[i+2].value;
+            result += player_hand.Cards[0].value;
+            result = result << 4*4;
+            break;
+        case 8:
             result = result << 4;
-        }
-        break;
-    case 1:
-        result = result << 4;
-        for (int i = 0; i < 4; i++)
-        {
-            result += player_hand.Cards[i].value;
+            result += player_hand.Cards[0].value;
             result = result << 4;
-        }
-        result += player_hand.Cards[4].value;
-        break;
+            result += player_hand.Cards[4].value;
+            result = result << 3*4;
+            break;
+        case 7:
+            result = result << 4;
+            result += player_hand.Cards[0].value;
+            result = result << 4;
+            result += player_hand.Cards[3].value;
+            result = result << 3*4;
+            break;
+        case 6:
+            result = result << 4;
+            for (int i = 0; i < 4; i++)
+            {
+                result += player_hand.Cards[i].value;
+                result = result << 4;
+            }
+            result += player_hand.Cards[4].value;
+            break;
+        case 5:
+            result = result << 4;
+            result += player_hand.Cards[0].value;
+            result = result << 4*4;
+            break;
+        case 4:
+            result = result << 4;
+            result += player_hand.Cards[0].value;
+            result = result << 4;
+            result += player_hand.Cards[3].value;
+            result = result << 4;
+            result += player_hand.Cards[4].value;
+            result = result << 4*2;
+            break;
+        case 3:
+            result = result << 4;
+            result += player_hand.Cards[0].value;
+            result = result << 4;
+            result += player_hand.Cards[2].value;
+            result = result << 4;
+            result += player_hand.Cards[4].value;
+            result = result << 4*2;
+            break;
+        case 2:
+            result = result << 4;
+            result += player_hand.Cards[0].value;
+            result = result << 4;
+            for (int i = 0; i < 3; i++)
+            {
+                result += player_hand.Cards[i+2].value;
+                result = result << 4;
+            }
+            break;
+        case 1:
+            result = result << 4;
+            for (int i = 0; i < 4; i++)
+            {
+                result += player_hand.Cards[i].value;
+                result = result << 4;
+            }
+            result += player_hand.Cards[4].value;
+            break;
     }
     return result;
 }
@@ -521,13 +520,14 @@ PYBIND11_MODULE(PokerPy, m) {
         .def_readwrite("value", &Card::value)
         .def_property("suit", [](Card& a){return (short)a.suit;}, [](Card& a, short s){return a.suit = (Suit)s;})
         .def("__repr__", [](Card &a){return "Card: "+card_values[a.value-1]+colors[a.suit - 1];})
-        .def("__eq__", [](Card &a,Card &b){return a.value == b.value && a.suit == b.suit;});
+        .def("__eq__", &Card::operator==)
+        .def("__ge__", &Card::operator>=);
     py::class_<Hand>(m, "Hand")
-        .def(py::init<string,array<Card,5>>())
+        .def(py::init<string, array<Card,5>>())
         .def_readwrite("hand_type", &Hand::hand_type)
         .def_readwrite("Cards", &Hand::Cards);
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frequency", &calculate_hand_frequency, "A function that gets the frequencies of the possible hands given any number of cards");
     m.def("calculate_hand_heuristic", &calculate_hand_heuristic, "A function that gets the heuristic of a hand.");
     m.def("nice_print_frequencies", &nice_print_frequencies, "A function that gets the frequencies of the possible hands and prints them in nice format");
-}   
+}
