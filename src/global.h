@@ -8,7 +8,7 @@
 using namespace std;
 
 enum Suit {Hearts = 1, Diamonds, Clubs, Spades};
-array<string, 4> colors = {"♣","♦","♥","♠"};
+array<string, 4> colors = {"♥", "♦", "♣", "♠"};
 array<string, 13> card_values = {"2","3","4","5","6","7","8","9","10","J","Q","K","A"};
 map<string, Suit> suit_values = {{"♥", Hearts}, {"♦", Diamonds}, {"♣", Clubs}, {"♠", Spades}, {"H", Hearts}, {"D", Diamonds}, {"C", Clubs}, {"S", Spades}};
 map<string, int> card_values_nums = {{"2",1},{"3",2},{"4",3},{"5",4},{"6",5},{"7",6},{"8",7},{"9",8},{"10",9},{"J",10},{"Q",11},{"K",12},{"A",13}};
