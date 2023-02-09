@@ -48,7 +48,7 @@ Hand get_best_hand(array<Card,7> cards){
     int group_size = 1;
     group[0] = cards[0];
     Card last_card = cards[0];
-    // Iterate through the sorted cards to extract the posible hands
+    // Iterate through the sorted cards to extract the possible hands
     for(int i=1; i<7; i++)
 	{
         // Search for pairs,triples,etc
@@ -263,13 +263,13 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
     }
     // Create the new hand array for passing it to the get_best_hand Function
     array<Card,7> new_hand;
-    string posible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
+    string possible_hand_types[10] = {"Royal Flush","Straight Flush","Poker","Full House","Flush","Straight","Triples","Double Pairs","Pairs","High Card"};
     // Create the map with the hand_types and the number of hands of that type
     vector<map<string,int>> players_hand_posibilities;
     map<string,int> hand_posibilities;
     for (int i = 0; i < 10; i++)
     {
-        hand_posibilities[posible_hand_types[i]] = 0;
+        hand_posibilities[possible_hand_types[i]] = 0;
     }
     hand_posibilities["Win"] = 0;
     hand_posibilities["Draw"] = 0;
@@ -279,8 +279,8 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
 
     }
     Hand result;
-    // Create all posible cards
-    vector<Card> posible_cards;
+    // Create all possible cards
+    vector<Card> possible_cards;
     for (int j = 13; j > 0; j--)
     {
         for (int i = 4; i > 0; i--)
@@ -300,7 +300,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             if (!alredy_in_hand){
                 new_card.value = j;
                 new_card.suit = (Suit)i;
-                posible_cards.push_back(new_card);
+                possible_cards.push_back(new_card);
             }
         }
         
@@ -308,8 +308,8 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
     
     array<int,5> indexes = {0,1,2,3,4};
     int n = (7-num_given_cards);
-    int N = posible_cards.size();
-    int num_posible_cases = 1;
+    int N = possible_cards.size();
+    int num_possible_cases = 1;
     int intersected_cards = 0;
     int player_hand_euristic = 0;
     array<int,10> drawed_players_indx = {0,0,0,0,0,0,0,0,0,0};
@@ -327,13 +327,13 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
                         new_hand[i] = players_cards[l][intersected_cards];
                         intersected_cards++;
                         continue;
-                    }else if (players_cards[l][intersected_cards].value >= posible_cards[indexes[i-intersected_cards]].value){
+                    }else if (players_cards[l][intersected_cards].value >= possible_cards[indexes[i-intersected_cards]].value){
                         new_hand[i] = players_cards[l][intersected_cards];
                         intersected_cards++;
                         continue;
                     }
                 }
-                new_hand[i] = posible_cards[indexes[i-intersected_cards]];
+                new_hand[i] = possible_cards[indexes[i-intersected_cards]];
             }
 
             result = get_best_hand(new_hand);
@@ -357,7 +357,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
                 players_hand_posibilities[drawed_players_indx[i]]["Draw"]++;
             }
         }
-        num_posible_cases++;
+        num_possible_cases++;
         if (indexes[0] == N-n){
             break;
         }
@@ -367,7 +367,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
             // Check if index can be aumented 
             if (indexes[n-i] < N-i) {
                 indexes[n-i]++;
-                // Go through the following indexes to reduce them to the minimum posible value
+                // Go through the following indexes to reduce them to the minimum possible value
                 for (int j = n-i+1; j < n; j++) {
                     indexes[j] = indexes[j-1] + 1;
                 }
@@ -377,7 +377,7 @@ vector<map<string,int>> calculate_hand_frequency(vector<vector<Card>> cards){
     }
     for (int l = 0; l < players_cards.size(); l++)
     {
-        players_hand_posibilities[l]["Total Cases"] = num_posible_cases;
+        players_hand_posibilities[l]["Total Cases"] = num_possible_cases;
 
     }
     return players_hand_posibilities;
