@@ -1,12 +1,12 @@
 from PokerPy import Card
 
 def test_card_init():
-    card = Card('KD')
+    card = Card(12, 2)
     assert card.value == 12
     assert card.suit == 2
 
 def test_card_eq():
-    assert Card('KD') == Card('KD')
-    assert Card('KD') != Card('AD')
-    assert Card('KD') != Card('KS')
-    assert Card('KD') != Card('AS')
+    assert Card(12, 2) == Card(12, 2)
+    assert Card(12, 2) != Card(13, 2)
+    assert Card(12, 2) != Card(12, 1)
+    assert Card(12, 2) != Card(13, 1)

@@ -249,13 +249,6 @@ Hand get_best_hand(array<Card,7> cards){
     return result;
 }
 
-Card create_card(string card){
-    Card c;
-    c.suit = suit_values[card.substr(card.size()-1,1)];
-    c.value = card_values_nums[card.substr(0,card.size()-1)];
-    return c;
-}
-
 int calculate_hand_heuristic(Hand player_hand){
     // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)
     int64_t result = hand_value[player_hand.hand_type];
@@ -516,7 +509,7 @@ void nice_print_frequencies(vector<map<string,int>> frecs){
 PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
-        .def(py::init(&create_card))
+        .def(py::init<short, short>())
         .def_readwrite("value", &Card::value)
         .def_property("suit", [](Card& a){return (short)a.suit;}, [](Card& a, short s){return a.suit = (Suit)s;})
         .def("__repr__", [](Card &a){return "Card: "+card_values[a.value-1]+colors[a.suit - 1];})
