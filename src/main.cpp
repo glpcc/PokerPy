@@ -437,7 +437,7 @@ PYBIND11_MODULE(PokerPy, m) {
         .def(py::init<short, short>())
         .def_readwrite("value", &Card::value)
         .def_property("suit", [](Card& a){return (short)a.suit;}, [](Card& a, short s){return a.suit = (Suit)s;})
-        .def("__repr__", [](Card &a){return "Card: "+card_values[a.value-1]+colors[a.suit - 1];})
+        .def("__repr__", &Card::to_string)
         .def("__eq__", &Card::operator==)
         .def("__ge__", &Card::operator>=);
     py::class_<Hand>(m, "Hand")
@@ -445,6 +445,7 @@ PYBIND11_MODULE(PokerPy, m) {
         .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
         .def_readwrite("Cards", &Hand::Cards)
         .def("hand_heuristic", &Hand::hand_heuristic)
+        .def("__repr__", &Hand::to_string)
         .def("__eq__", &Hand::operator==)
         .def("__ge__", &Hand::operator>=);
     m.def("card_from_string", &card_from_string, "A function that converts a string to a Card");

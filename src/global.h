@@ -53,6 +53,10 @@ struct Card{
         suit((Suit) suit)
     {}
 
+    string to_string() const {
+        return "Card: " + card_values[this->value - 1] + colors[this->suit - 1];
+    }
+
     bool operator==(const Card& rhs) const {
         return (this->value == rhs.value) && (this->suit == rhs.suit);
     }
@@ -79,6 +83,14 @@ struct Hand{
         hand_type((HandType) hand_type),
         Cards(cards)
     {}
+
+    string to_string() const {
+        string res = "Hand: " + hand_names[this->hand_type - 1] + ", Cards:";
+        for (Card card: this->Cards){
+            res += " " + card_values[card.value - 1] + colors[card.suit - 1];
+        }
+        return res;
+    }
 
     int hand_heuristic() const {
         // Uses bitshifting to ensure ranking of hands. It is shifted in pacs of 4bits allowing 16 options (13 needed)

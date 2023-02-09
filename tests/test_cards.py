@@ -5,6 +5,10 @@ def test_card_init():
     assert card.value == 12
     assert card.suit == 2
 
+def test_card_repr():
+    card = Card(12, 2)
+    assert card.__repr__() == "Card: K♦"
+
 def test_card_eq():
     assert Card(12, 2) == Card(12, 2)
     assert Card(12, 2) != Card(13, 2)
