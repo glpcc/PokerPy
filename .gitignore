@@ -2,4 +2,9 @@ build/
 *.egg-info/
 *.exe/
 .vscode/
-test/__pycache__
+__pycache__
+.devcontainer
+*.so
+*.out
+*.cpython*
+.pytest_cache
