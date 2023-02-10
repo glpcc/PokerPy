@@ -36,6 +36,18 @@ array<string,10> hand_names = {
     "Straight Flush",
     "Royal Flush"
 };
+map<string, HandType> hand_mapping = {
+    {"High Card", HighCard},
+    {"Pairs", Pairs},
+    {"Double Pairs", DoublePairs},
+    {"Triples", Triples},
+    {"Straight", Straight},
+    {"Flush", Flush},
+    {"Full House", FullHouse},
+    {"Poker", Poker},
+    {"Straight Flush", StraightFlush},
+    {"Royal Flush", RoyalFlush}
+};
 
 struct Card{
     // 1 to 13 (2 to A)
@@ -86,6 +98,11 @@ struct Hand{
 
     Hand(short hand_type, array<Card,5> cards):
         hand_type((HandType) hand_type),
+        Cards(cards)
+    {}
+
+    Hand(string hand_type, array<Card,5> cards):
+        hand_type(hand_mapping[hand_type]),
         Cards(cards)
     {}
 

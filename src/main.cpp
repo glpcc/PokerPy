@@ -436,6 +436,7 @@ PYBIND11_MODULE(PokerPy, m) {
         .def("__ge__", &Card::operator>=);
     py::class_<Hand>(m, "Hand")
         .def(py::init<short, array<Card,5>>())
+        .def(py::init<string, array<Card,5>>())
         .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
         .def_readwrite("Cards", &Hand::Cards)
         .def("hand_heuristic", &Hand::hand_heuristic)
