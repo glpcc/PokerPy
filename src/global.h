@@ -53,6 +53,11 @@ struct Card{
         suit((Suit) suit)
     {}
 
+    Card(string card) {
+        this->value = card_values_nums[card.substr(0,card.size()-1)];
+        this->suit = suit_values[card.substr(card.size()-1,1)];
+    }
+
     string to_string() const {
         return "Card: " + card_values[this->value - 1] + colors[this->suit - 1];
     }

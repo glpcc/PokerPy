@@ -1,4 +1,4 @@
-from PokerPy import Card, Hand, calculate_hand_frequency, get_best_hand, card_from_string
+from PokerPy import Card, Hand, calculate_hand_frequency, get_best_hand
 
 def test_calculate_frec():
     test_cards = [[Card(12, 2),Card(8, 1)],[Card(12, 3),Card(13, 3)]]

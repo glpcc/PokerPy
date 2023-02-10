@@ -394,13 +394,6 @@ string round_float(float a,int num_decimals){
     return total_number.substr(0,total_number.find(".")+2);
 }
 
-Card card_from_string(string card){
-    Card c;
-    c.suit = suit_values[card.substr(card.size()-1,1)];
-    c.value = card_values_nums[card.substr(0,card.size()-1)];
-    return c;
-}
-
 void nice_print_frequencies(vector<map<string,int>> frecs){
     // Print win/draw probabilities
     for (int i = 0; i < frecs.size(); i++){
@@ -435,12 +428,12 @@ PYBIND11_MODULE(PokerPy, m) {
     m.doc() = "pybind11 plugin for calculating poker probabilities."; // optional module docstring
     py::class_<Card>(m, "Card")
         .def(py::init<short, short>())
+        .def(py::init<string>())
         .def_readwrite("value", &Card::value)
         .def_property("suit", [](Card& a){return (short)a.suit;}, [](Card& a, short s){return a.suit = (Suit)s;})
         .def("__repr__", &Card::to_string)
         .def("__eq__", &Card::operator==)
-        .def("__ge__", &Card::operator>=)
-        .def("from_string", &card_from_string);
+        .def("__ge__", &Card::operator>=);
     py::class_<Hand>(m, "Hand")
         .def(py::init<short, array<Card,5>>())
         .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
