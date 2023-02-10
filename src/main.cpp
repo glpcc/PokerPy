@@ -429,7 +429,7 @@ PYBIND11_MODULE(PokerPy, m) {
     py::class_<Card>(m, "Card")
         .def(py::init<short, short>())
         .def(py::init<string>())
-        .def_readwrite("value", &Card::value)
+        .def_property("value", [](Card& a){return card_names[a.value - 1];}, [](Card& a, string v){return a.value = card_values[v];})
         .def_property("suit", [](Card& a){return suit_names[a.suit - 1];}, [](Card& a, string s){return a.suit = suit_values[s];})
         .def("__repr__", &Card::to_string)
         .def("__eq__", &Card::operator==)
