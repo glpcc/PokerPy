@@ -20,9 +20,9 @@ enum HandType {
     StraightFlush,
     RoyalFlush = 10
 };
-array<string, 4> colors = {"♥", "♦", "♣", "♠"};
-array<string, 13> card_values = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+array<string, 4> suit_names = {"♥", "♦", "♣", "♠"};
 map<string, Suit> suit_values = {{"♥", Hearts}, {"♦", Diamonds}, {"♣", Clubs}, {"♠", Spades}, {"H", Hearts}, {"D", Diamonds}, {"C", Clubs}, {"S", Spades}};
+array<string, 13> card_values = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 map<string, short> card_values_nums = {{"2", 1}, {"3", 2}, {"4", 3}, {"5", 4}, {"6", 5}, {"7", 6}, {"8", 7}, {"9", 8}, {"10", 9}, {"J", 10}, {"Q", 11}, {"K", 12}, {"A", 13}};
 array<string,10> hand_names = {
     "High Card",
@@ -36,7 +36,7 @@ array<string,10> hand_names = {
     "Straight Flush",
     "Royal Flush"
 };
-map<string, HandType> hand_mapping = {
+map<string, HandType> hand_values = {
     {"High Card", HighCard},
     {"Pairs", Pairs},
     {"Double Pairs", DoublePairs},
@@ -71,7 +71,7 @@ struct Card{
     }
 
     string to_string() const {
-        return "Card: " + card_values[this->value - 1] + colors[this->suit - 1];
+        return "Card: " + card_values[this->value - 1] + suit_names[this->suit - 1];
     }
 
     bool operator==(const Card& rhs) const {
@@ -102,14 +102,14 @@ struct Hand{
     {}
 
     Hand(string hand_type, array<Card,5> cards):
-        hand_type(hand_mapping[hand_type]),
+        hand_type(hand_values[hand_type]),
         Cards(cards)
     {}
 
     string to_string() const {
         string res = "Hand: " + hand_names[this->hand_type - 1] + ", Cards:";
         for (Card card: this->Cards){
-            res += " " + card_values[card.value - 1] + colors[card.suit - 1];
+            res += " " + card_values[card.value - 1] + suit_names[card.suit - 1];
         }
         return res;
     }

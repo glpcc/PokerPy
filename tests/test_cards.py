@@ -3,12 +3,12 @@ from PokerPy import Card
 def test_card_init():
     card = Card(12, 2)
     assert card.value == 12
-    assert card.suit == 2
+    assert card.suit == '♦'
 
 def test_card_from_string():
     card = Card('AD')
     assert card.value == 13
-    assert card.suit == 2
+    assert card.suit == '♦'
 
 def test_card_repr():
     card = Card(12, 2)
