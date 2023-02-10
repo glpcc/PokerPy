@@ -439,7 +439,8 @@ PYBIND11_MODULE(PokerPy, m) {
         .def_property("suit", [](Card& a){return (short)a.suit;}, [](Card& a, short s){return a.suit = (Suit)s;})
         .def("__repr__", &Card::to_string)
         .def("__eq__", &Card::operator==)
-        .def("__ge__", &Card::operator>=);
+        .def("__ge__", &Card::operator>=)
+        .def("from_string", &card_from_string);
     py::class_<Hand>(m, "Hand")
         .def(py::init<short, array<Card,5>>())
         .def_property("hand_type", [](Hand& a){return (short)a.hand_type;}, [](Hand& a, short ht){return a.hand_type = (HandType)ht;})
@@ -448,7 +449,6 @@ PYBIND11_MODULE(PokerPy, m) {
         .def("__repr__", &Hand::to_string)
         .def("__eq__", &Hand::operator==)
         .def("__ge__", &Hand::operator>=);
-    m.def("card_from_string", &card_from_string, "A function that converts a string to a Card");
     m.def("get_best_hand", &get_best_hand_not_sorted, "A function that gets the best hands given 7 cards");
     m.def("calculate_hand_frequency", &calculate_hand_frequency, "A function that gets the frequencies of the possible hands given any number of cards");
     m.def("nice_print_frequencies", &nice_print_frequencies, "A function that gets the frequencies of the possible hands and prints them in nice format");

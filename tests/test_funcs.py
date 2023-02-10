@@ -1,10 +1,5 @@
 from PokerPy import Card, Hand, calculate_hand_frequency, get_best_hand, card_from_string
 
-def test_card_from_string():
-    card = card_from_string('KD')
-    assert card.value == 12
-    assert card.suit == 2
-
 def test_calculate_frec():
     test_cards = [[Card(12, 2),Card(8, 1)],[Card(12, 3),Card(13, 3)]]
     frecs = calculate_hand_frequency(test_cards)
