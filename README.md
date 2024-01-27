@@ -9,7 +9,7 @@ To install this module use the following command.
 pip install git+https://github.com/glpcc/PokerPy
 ```
 # Use Cases
-In the [test folder](test/test.py) are some use cases of possibilities with this module
+In the [test folder](tests/) are some use cases of possibilities with this module
 
 # Documentation
 
